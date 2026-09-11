@@ -21,6 +21,8 @@ describe('PDFium true text editing', () => {
     expect(check.listTextObjects(0).map((item) => item.text).join(' ')).toContain('WORLD')
     expect(check.listTextObjects(0).map((item) => item.text).join(' ')).not.toContain('HELLO')
     engine.close()
+    engine.close()
+    check.close()
     check.close()
   })
 })

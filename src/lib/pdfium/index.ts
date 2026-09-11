@@ -90,6 +90,7 @@ export class PdfiumDocument {
   private readonly pdfium: WrappedPdfiumModule
   private readonly document: number
   private readonly input: number
+  private closed = false
   private constructor(pdfium: WrappedPdfiumModule, document: number, input: number) {
     this.pdfium = pdfium
     this.document = document
@@ -175,6 +176,8 @@ export class PdfiumDocument {
   }
 
   close() {
+    if (this.closed) return
+    this.closed = true
     this.pdfium.FPDF_CloseDocument(this.document)
     this.pdfium.pdfium.wasmExports.free(this.input)
   }
