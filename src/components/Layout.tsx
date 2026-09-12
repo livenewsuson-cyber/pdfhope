@@ -1,13 +1,16 @@
 import { Command, Heart, Moon, Search, Sun } from 'lucide-react'
-import { Link, NavLink, Outlet } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
+import { useEffect, useLayoutEffect, useState } from 'react'
 import { tools } from '../data/tools'
 import { useWebMcp } from '../hooks/useWebMcp'
 
 export function Layout() {
   useWebMcp()
+  const { pathname, search: routeSearch }=useLocation()
   const [dark,setDark]=useState(()=>localStorage.getItem('pdfhope-theme')==='dark'||(!localStorage.getItem('pdfhope-theme')&&matchMedia('(prefers-color-scheme: dark)').matches))
   const [search,setSearch]=useState(false),[query,setQuery]=useState('')
+  useLayoutEffect(()=>{window.scrollTo({top:0,left:0,behavior:'auto'})},[pathname,routeSearch])
+  useEffect(()=>{const previous=history.scrollRestoration;history.scrollRestoration='manual';return()=>{history.scrollRestoration=previous}},[])
   useEffect(()=>{document.documentElement.dataset.theme=dark?'dark':'light';localStorage.setItem('pdfhope-theme',dark?'dark':'light')},[dark])
   useEffect(()=>{const key=(event:KeyboardEvent)=>{if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='k'){event.preventDefault();setSearch(true)}if(event.key==='Escape')setSearch(false)};addEventListener('keydown',key);return()=>removeEventListener('keydown',key)},[])
   const results=tools.filter((tool)=>`${tool.name} ${tool.short} ${tool.category}`.toLowerCase().includes(query.toLowerCase())).slice(0,8)
