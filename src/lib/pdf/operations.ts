@@ -63,7 +63,17 @@ export async function splitPdf(file: File, groups: number[][]) {
 }
 
 async function imageBytes(file: File) {
-  if (file.type !== 'image/webp') return { bytes: await read(file), type: file.type }
+  const bytes = await read(file)
+  // Trust the file signature over the browser-provided MIME type. Camera and
+  // messaging apps sometimes give images a misleading extension/type; passing
+  // JPEG bytes to pdf-lib's PNG decoder (or vice versa) causes a generic export
+  // failure. WebP still needs rasterization before embedding.
+  const isJpeg = bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff
+  const isPng = bytes.length >= 8 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47 && bytes[4] === 0x0d && bytes[5] === 0x0a && bytes[6] === 0x1a && bytes[7] === 0x0a
+  const isWebp = bytes.length >= 12 && String.fromCharCode(...bytes.slice(0, 4)) === 'RIFF' && String.fromCharCode(...bytes.slice(8, 12)) === 'WEBP'
+  if (isJpeg) return { bytes, type: 'image/jpeg' }
+  if (isPng) return { bytes, type: 'image/png' }
+  if (!isWebp && file.type !== 'image/webp') throw new Error('The selected file is not a supported JPG, PNG, or WebP image.')
   const bitmap = await createImageBitmap(file)
   const canvas = document.createElement('canvas')
   canvas.width = bitmap.width; canvas.height = bitmap.height
