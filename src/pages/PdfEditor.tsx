@@ -19,7 +19,7 @@ type EditorObject = {
   strokeColor?: string; strokeWidth?: number; fillColor?: string; fillOpacity?: number; shape?: ShapeKind
 }
 type EditorState = { objects: EditorObject[]; deletedPages: number[]; pageOrder: number[] }
-type HistoryEntry = { before: EditorState; after: EditorState; beforePdf?: Uint8Array; afterPdf?: Uint8Array }
+type HistoryEntry = { before: EditorState; after: EditorState; beforePdf?: Uint8Array; afterPdf?: Uint8Array; beforePage?: number; afterPage?: number }
 type Transform = { id: number; kind: 'move' | 'resize' | 'resize-start'; startX: number; startY: number; original: EditorObject; before: EditorState; moved: boolean }
 type Gesture = { kind: 'highlight' | 'shape' | 'drawing' | 'erase'; start: Point; points: Point[]; before: EditorState; erasedIds: Set<number> }
 
@@ -166,8 +166,8 @@ export function PdfEditor() {
   const reloadPdfium = async (bytes: Uint8Array) => { pdfium?.close(); const engine = await loadPdfiumDocument(bytes); setPdfium(engine); setTextObjects(Array.from({ length: engine.pageCount }, (_, index) => engine.listTextObjects(index)).flat()); const next = new File([bytes as BlobPart], file?.name || 'edited.pdf', { type: 'application/pdf' }); setFile(next); setDoc(await openRenderedPdf(next)) }
   const applyExisting = async () => { if (!pdfium || !selectedText || !replacement.trim()) { setError('Select supported text and enter a replacement.'); return } setPdfiumBusy(true); setError(''); try { const beforePdf = await pdfium.save(), old = selectedText.text; pdfium.replaceTextObject(selectedText, replacement); const afterPdf = await pdfium.save(), verification = await openRenderedPdf(new File([afterPdf as BlobPart], 'verify.pdf', { type: 'application/pdf' })), content = await (await verification.getPage(selectedText.pageIndex + 1)).getTextContent(), extracted = content.items.map((item: any) => item.str).join(' '); await verification.cleanup(); if (extracted.includes(old) || !extracted.includes(replacement)) throw new Error('PDFium verification failed.'); await reloadPdfium(afterPdf); const snapshot = clone(stateRef.current); record({ before: snapshot, after: snapshot, beforePdf, afterPdf }); setSelectedText(null) } catch (caught) { setError(String(caught).replace(/^Error:\s*/, '') || 'This text cannot be edited directly.') } finally { setPdfiumBusy(false) } }
 
-  const undo = async () => { finishTextEdit(); const entry = historyRef.current.at(-1); if (!entry) return; historyRef.current = historyRef.current.slice(0, -1); setHistory(historyRef.current); futureRef.current = [entry, ...futureRef.current]; setFuture(futureRef.current); updateState(clone(entry.before)); setSelectedId(null); if (entry.beforePdf) { setPdfiumBusy(true); try { await reloadPdfium(entry.beforePdf) } finally { setPdfiumBusy(false) } } }
-  const redo = async () => { finishTextEdit(); const entry = futureRef.current[0]; if (!entry) return; futureRef.current = futureRef.current.slice(1); setFuture(futureRef.current); historyRef.current = [...historyRef.current, entry]; setHistory(historyRef.current); updateState(clone(entry.after)); setSelectedId(null); if (entry.afterPdf) { setPdfiumBusy(true); try { await reloadPdfium(entry.afterPdf) } finally { setPdfiumBusy(false) } } }
+  const undo = async () => { finishTextEdit(); const entry = historyRef.current.at(-1); if (!entry) return; historyRef.current = historyRef.current.slice(0, -1); setHistory(historyRef.current); futureRef.current = [entry, ...futureRef.current]; setFuture(futureRef.current); updateState(clone(entry.before)); setSelectedId(null); if (entry.beforePage) setPage(entry.beforePage); if (entry.beforePdf) { setPdfiumBusy(true); try { await reloadPdfium(entry.beforePdf) } finally { setPdfiumBusy(false) } } }
+  const redo = async () => { finishTextEdit(); const entry = futureRef.current[0]; if (!entry) return; futureRef.current = futureRef.current.slice(1); setFuture(futureRef.current); historyRef.current = [...historyRef.current, entry]; setHistory(historyRef.current); updateState(clone(entry.after)); setSelectedId(null); if (entry.afterPage) setPage(entry.afterPage); if (entry.afterPdf) { setPdfiumBusy(true); try { await reloadPdfium(entry.afterPdf) } finally { setPdfiumBusy(false) } } }
   const removeSelected = () => { if (editingId !== null || selectedId === null) return; commit({ ...stateRef.current, objects: stateRef.current.objects.filter((object) => object.id !== selectedId) }); setSelectedId(null) }
   useEffect(() => { const handler = (event: KeyboardEvent) => { if (typingTarget(event.target)) return; if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); void (event.shiftKey ? redo() : undo()); return } if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'y') { event.preventDefault(); void redo(); return } if ((event.key === 'Delete' || event.key === 'Backspace') && selectedId !== null) { event.preventDefault(); removeSelected() } }; window.addEventListener('keydown', handler); return () => window.removeEventListener('keydown', handler) })
 
@@ -175,16 +175,29 @@ export function PdfEditor() {
   const propertyEnd = () => { const before = propertyBefore.current; propertyBefore.current = null; if (before) record({ before, after: clone(stateRef.current) }) }
   const updateSelected = (patch: Partial<EditorObject>) => updateState((current) => ({ ...current, objects: current.objects.map((object) => object.id === selectedId ? { ...object, ...patch } : object) }))
   const toggleSelected = (patch: Partial<EditorObject>) => { const before = clone(stateRef.current), after = { ...before, objects: before.objects.map((object) => object.id === selectedId ? { ...object, ...patch } : object) }; updateState(after); record({ before, after: clone(after) }) }
-  const pageEdit = (kind: 'delete' | 'duplicate' | 'blank') => { const before = clone(stateRef.current); let after = before; if (kind === 'delete') after = { ...before, deletedPages: [...new Set([...before.deletedPages, page])] }; if (kind === 'duplicate') after = { ...before, pageOrder: [...before.pageOrder.slice(0, page), before.pageOrder[page - 1], ...before.pageOrder.slice(page)] }; if (kind === 'blank') after = { ...before, pageOrder: [...before.pageOrder.slice(0, page), 0, ...before.pageOrder.slice(page)] }; updateState(after); record({ before, after: clone(after) }) }
+  const pageEdit = (kind: 'delete' | 'duplicate' | 'blank') => {
+    const before = clone(stateRef.current)
+    if (kind === 'delete') {
+      if (before.pageOrder.length <= 1) { setError('A PDF must contain at least one page.'); return }
+      const removedIndex = page - 1, nextOrder = before.pageOrder.filter((_, index) => index !== removedIndex)
+      const nextObjects = before.objects.filter((object) => object.pageIndex !== removedIndex).map((object) => object.pageIndex > removedIndex ? { ...object, pageIndex: object.pageIndex - 1 } : object)
+      const after = { ...before, pageOrder: nextOrder, objects: nextObjects }, nextPage = Math.min(page, nextOrder.length)
+      updateState(after); setPage(nextPage); setSelectedId(null); setSelectedText(null); setError(''); record({ before, after: clone(after), beforePage: page, afterPage: nextPage }); return
+    }
+    let after = before
+    if (kind === 'duplicate') after = { ...before, pageOrder: [...before.pageOrder.slice(0, page), before.pageOrder[page - 1], ...before.pageOrder.slice(page)] }
+    if (kind === 'blank') after = { ...before, pageOrder: [...before.pageOrder.slice(0, page), 0, ...before.pageOrder.slice(page)] }
+    updateState(after); record({ before, after: clone(after) })
+  }
 
   const exportPdf = async () => {
     if (!file) return
     finishTextEdit()
     try {
-      const sourceBytes = pdfium ? await pdfium.save() : new Uint8Array(await file.arrayBuffer()), source = await PDFDocument.load(sourceBytes, { ignoreEncryption: false }), pageEdits = state.pageOrder.some((value, index) => value !== index + 1) || state.deletedPages.length > 0
+      const sourceBytes = pdfium ? await pdfium.save() : new Uint8Array(await file.arrayBuffer()), source = await PDFDocument.load(sourceBytes, { ignoreEncryption: false }), pageEdits = state.pageOrder.length !== source.getPageCount() || state.pageOrder.some((value, index) => value !== index + 1)
       let output = source
       const outputObjectPages: number[] = []
-      if (pageEdits) { output = await PDFDocument.create(); for (const [index, sourceNumber] of state.pageOrder.entries()) { if (state.deletedPages.includes(index + 1)) continue; outputObjectPages.push(index); if (!sourceNumber) output.addPage([612, 792]); else { const [copied] = await output.copyPages(source, [sourceNumber - 1]); output.addPage(copied) } } } else outputObjectPages.push(...state.pageOrder.map((_, index) => index))
+      if (pageEdits) { output = await PDFDocument.create(); for (const [index, sourceNumber] of state.pageOrder.entries()) { outputObjectPages.push(index); if (!sourceNumber) output.addPage([612, 792]); else { const [copied] = await output.copyPages(source, [sourceNumber - 1]); output.addPage(copied) } } } else outputObjectPages.push(...state.pageOrder.map((_, index) => index))
       const regular = await output.embedFont(StandardFonts.Helvetica), bold = await output.embedFont(StandardFonts.HelveticaBold), italic = await output.embedFont(StandardFonts.HelveticaOblique), boldItalic = await output.embedFont(StandardFonts.HelveticaBoldOblique)
       for (const [index, pdfPage] of output.getPages().entries()) for (const object of state.objects.filter((item) => item.pageIndex === outputObjectPages[index])) {
         const bottom = pdfPage.getHeight() - object.y - object.height, opacity = clamp(object.opacity, 0, 1)
