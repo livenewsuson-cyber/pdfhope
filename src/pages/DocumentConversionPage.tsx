@@ -3,6 +3,7 @@ import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { convertDocument, type ConversionMode, outputName, validateConversionFile } from '../lib/conversion'
 import { downloadBlob, formatBytes } from '../lib/files'
+import { ToolIcon } from '../components/ToolIcon'
 import { useSeo } from '../hooks/useSeo'
 
 type Status = 'empty' | 'ready' | 'uploading' | 'analyzing' | 'converting' | 'preparing' | 'complete'
@@ -23,6 +24,10 @@ const copy = {
 } as const
 
 export function DocumentConversionPage({ mode }: { mode: ConversionMode }) {
+  return <DocumentConversionWorkspace key={mode} mode={mode}/>
+}
+
+function DocumentConversionWorkspace({ mode }: { mode: ConversionMode }) {
   const info = copy[mode]
   useSeo(info.seoTitle, info.seoDescription, `/${mode}`, true, true)
   const input = useRef<HTMLInputElement>(null)
@@ -61,7 +66,7 @@ export function DocumentConversionPage({ mode }: { mode: ConversionMode }) {
   const currentStep = status === 'ready' ? 'Ready' : status === 'uploading' ? 'Uploading' : status === 'analyzing' ? 'Analyzing PDF' : status === 'converting' ? (mode === 'word-to-pdf' ? 'Converting Word to PDF' : 'Converting PDF to Word') : status === 'preparing' ? (mode === 'word-to-pdf' ? 'Preparing download' : 'Preparing DOCX') : status === 'complete' ? 'Complete' : ''
 
   return <main className="tool-page conversion-page"><div className="tool-breadcrumb"><Link to="/tools"><ArrowLeft size={16}/> All tools</Link><span>/</span><span>Convert</span></div>
-    <section className="tool-intro"><div><span className="kicker">Convert</span><h1>{info.title}</h1><p>{info.description}</p></div></section>
+    <section className="tool-intro"><div><span className="tool-brand-label"><ToolIcon slug={mode} compact/><span className="kicker">Convert</span></span><h1>{info.title}</h1><p>{info.description}</p></div></section>
     {error && <div className="error-panel" role="alert"><AlertCircle size={20}/><div><strong>We couldn’t continue</strong><p>{error}</p></div></div>}
     <section className="workspace-card conversion-workspace"><input ref={input} hidden type="file" accept={info.accept} onChange={(event) => void choose(event.target.files?.[0])}/>
       {!file && <div className={`dropzone conversion-dropzone ${dragging ? 'is-active' : ''}`} onDragOver={(event) => { event.preventDefault(); setDragging(true) }} onDragLeave={() => setDragging(false)} onDrop={(event) => { event.preventDefault(); setDragging(false); void choose(event.dataTransfer.files[0]) }}>

@@ -1,8 +1,9 @@
-import { AlertCircle, ArrowLeft, Check, ChevronDown, ChevronUp, Download, FileText, Heart, LockKeyhole, RotateCcw, ShieldCheck, Trash2 } from 'lucide-react'
+import { AlertCircle, ArrowLeft, Check, ChevronDown, ChevronUp, Download, Heart, LockKeyhole, RotateCcw, ShieldCheck, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { zipSync } from 'fflate'
 import { FileDropzone } from '../components/FileDropzone'
+import { ToolIcon } from '../components/ToolIcon'
 import { PageGrid } from '../components/PageGrid'
 import { getTool, tools } from '../data/tools'
 import { downloadBlob, formatBytes, parsePageSelection, safeBaseName, validateFiles } from '../lib/files'
@@ -51,7 +52,7 @@ function ToolWorkspace({tool}:{tool:NonNullable<ReturnType<typeof getTool>>}) {
     setProgress(100);setResult(output);setResultName(`${safeBaseName(files[0]?.name||'document')}-${name}`);setPhase('done')
   }catch(cause){setError(cause instanceof Error?friendlyError(cause):'Processing failed.');setPhase('configure')}}
   const related=useMemo(()=>tools.filter((item)=>item.category===tool.category&&item.slug!==tool.slug).slice(0,3),[tool])
-  return <main className="tool-page"><div className="tool-breadcrumb"><Link to="/tools"><ArrowLeft size={16}/> All tools</Link><span>/</span><span>{tool.category}</span></div><section className="tool-intro"><div><span className="kicker">{tool.category}</span><h1>{tool.name}</h1><p>{tool.description}</p></div><button className={`favorite-button ${favorite?'active':''}`} onClick={updateFavorite} aria-label={favorite?'Remove from favorites':'Add to favorites'}><Heart size={18} fill={favorite?'currentColor':'none'}/>{favorite?'Saved':'Save tool'}</button></section>
+  return <main className="tool-page"><div className="tool-breadcrumb"><Link to="/tools"><ArrowLeft size={16}/> All tools</Link><span>/</span><span>{tool.category}</span></div><section className="tool-intro"><div><span className="tool-brand-label"><ToolIcon slug={tool.slug} compact/><span className="kicker">{tool.category}</span></span><h1>{tool.name}</h1><p>{tool.description}</p></div><button className={`favorite-button ${favorite?'active':''}`} onClick={updateFavorite} aria-label={favorite?'Remove from favorites':'Add to favorites'}><Heart size={18} fill={favorite?'currentColor':'none'}/>{favorite?'Saved':'Save tool'}</button></section>
     <ol className="stepper" aria-label="Progress"><li className={phase==='upload'?'active':'complete'}><span>1</span>Upload</li><li className={phase==='configure'?'active':phase==='processing'||phase==='done'?'complete':''}><span>2</span>Configure</li><li className={phase==='processing'||phase==='done'?'active':''}><span>3</span>Process & download</li></ol>
     {error&&<div className="error-panel" role="alert"><AlertCircle size={20}/><div><strong>We couldn’t continue</strong><p>{error}</p></div></div>}
     <section className="workspace-card">
@@ -61,7 +62,7 @@ function ToolWorkspace({tool}:{tool:NonNullable<ReturnType<typeof getTool>>}) {
     </section>
     <section className="tool-copy"><article><span className="kicker">How it works</span><h2>Simple, local, predictable</h2><ol>{tool.instructions.map((item,index)=><li key={item}><span>{index+1}</span><p>{item}</p></li>)}</ol></article><aside><ShieldCheck size={24}/><h3>Privacy for this tool</h3><p>Selected files are read by browser APIs and processed in memory on your device. This page has no file-upload endpoint.</p><h3>Limitations</h3><p>{tool.limitations}</p></aside></section>
     <section className="faq"><span className="kicker">Questions</span><h2>{tool.name} FAQ</h2><details><summary>Are my files uploaded?</summary><p>No. This implementation processes supported files in your browser. Network requests may still load the website’s code, but your document bytes are not sent to PDFHope.</p></details><details><summary>Why can a large PDF fail?</summary><p>Browsers have device-dependent memory limits. Close other heavy tabs, try a smaller document, or process fewer pages at once.</p></details><details><summary>Does the original file change?</summary><p>No. PDFHope creates a new downloadable file and does not modify the original on your device.</p></details></section>
-    <section className="related"><h2>Related {tool.category.toLowerCase()} tools</h2><div>{related.map((item)=><Link key={item.slug} to={`/${item.slug}`}><FileText size={20}/><span><strong>{item.name}</strong><small>{item.short}</small></span></Link>)}</div></section>
+    <section className="related"><h2>Related {tool.category.toLowerCase()} tools</h2><div>{related.map((item)=><Link key={item.slug} to={`/${item.slug}`}><ToolIcon slug={item.slug} compact/><span><strong>{item.name}</strong><small>{item.short}</small></span></Link>)}</div></section>
   </main>
 }
 
