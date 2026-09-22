@@ -1,15 +1,17 @@
-import { AlertCircle, ArrowLeft, Check, ChevronDown, ChevronUp, Download, Heart, LockKeyhole, RotateCcw, ShieldCheck, Trash2 } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { AlertCircle, ArrowLeft, Check, ChevronDown, ChevronUp, Download, Heart, LockKeyhole, RotateCcw, Trash2 } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { zipSync } from 'fflate'
 import { FileDropzone } from '../components/FileDropzone'
 import { ToolIcon } from '../components/ToolIcon'
 import { PageGrid } from '../components/PageGrid'
-import { getTool, tools } from '../data/tools'
+import { getTool } from '../data/tools'
 import { downloadBlob, formatBytes, parsePageSelection, safeBaseName, validateFiles } from '../lib/files'
 import { addPageNumbers, addWatermark, cleanMetadata, contactSheetPdf, copySelectedPages, deinterleavePdf, imagesToPdf, inspectPdf, interleavePdfs, jsonBlob, mergePdfs, nUpPdf, removePages, reorderPages, rotatePages, splitPdf } from '../lib/pdf/operations'
 import { renderPdfPages, visualAnalysis } from '../lib/pdf/render'
 import { useSeo } from '../hooks/useSeo'
+import { toolSeo } from '../data/toolSeo'
+import { ToolSeoContent } from '../components/ToolSeoContent'
 
 type Phase = 'upload'|'configure'|'processing'|'done'
 
@@ -20,7 +22,8 @@ export function ToolPage() {
 }
 
 function ToolWorkspace({tool}:{tool:NonNullable<ReturnType<typeof getTool>>}) {
-  useSeo(tool.name,tool.description,`/${tool.slug}`)
+  const seo = toolSeo[tool.slug]
+  useSeo(seo?.seoTitle||tool.name,seo?.metaDescription||tool.description,`/${tool.slug}`,true,true)
   const [files,setFiles]=useState<File[]>([]),[phase,setPhase]=useState<Phase>('upload'),[error,setError]=useState(''),[progress,setProgress]=useState(0),[result,setResult]=useState<Blob|null>(null),[resultName,setResultName]=useState(tool.output),[report,setReport]=useState<Record<string,unknown>|null>(null),[pageCount,setPageCount]=useState(0),[selected,setSelected]=useState<number[]>([]),[order,setOrder]=useState<number[]>([]),[range,setRange]=useState(''),[splitMode,setSplitMode]=useState<'every'|'ranges'|'interval'>('every'),[interval,setInterval]=useState(2),[angle,setAngle]=useState(90),[favorite,setFavorite]=useState(()=>JSON.parse(localStorage.getItem('pdfhope-favorites')||'[]').includes(tool.slug)),[options,setOptions]=useState({pageSize:'a4',margin:24,fit:'fit',format:tool.slug.includes('png')?'png':'jpeg',quality:.86,scale:1.6,start:1,size:12,position:'bottom-center',prefix:'',text:'CONFIDENTIAL',opacity:.2,watermarkAngle:-32,nup:2,landscape:false,columns:3})
   const needsPages=!['merge','images-to-pdf','interleave'].includes(tool.kind)
   const isAnalyzer=['health','blank','page-size','orientation','duplicate'].includes(tool.kind)
@@ -51,7 +54,6 @@ function ToolWorkspace({tool}:{tool:NonNullable<ReturnType<typeof getTool>>}) {
     }
     setProgress(100);setResult(output);setResultName(`${safeBaseName(files[0]?.name||'document')}-${name}`);setPhase('done')
   }catch(cause){setError(cause instanceof Error?friendlyError(cause):'Processing failed.');setPhase('configure')}}
-  const related=useMemo(()=>tools.filter((item)=>item.category===tool.category&&item.slug!==tool.slug).slice(0,3),[tool])
   return <main className="tool-page"><div className="tool-breadcrumb"><Link to="/tools"><ArrowLeft size={16}/> All tools</Link><span>/</span><span>{tool.category}</span></div><section className="tool-intro"><div><span className="tool-brand-label"><ToolIcon slug={tool.slug} compact/><span className="kicker">{tool.category}</span></span><h1>{tool.name}</h1><p>{tool.description}</p></div><button className={`favorite-button ${favorite?'active':''}`} onClick={updateFavorite} aria-label={favorite?'Remove from favorites':'Add to favorites'}><Heart size={18} fill={favorite?'currentColor':'none'}/>{favorite?'Saved':'Save tool'}</button></section>
     <ol className="stepper" aria-label="Progress"><li className={phase==='upload'?'active':'complete'}><span>1</span>Upload</li><li className={phase==='configure'?'active':phase==='processing'||phase==='done'?'complete':''}><span>2</span>Configure</li><li className={phase==='processing'||phase==='done'?'active':''}><span>3</span>Process & download</li></ol>
     {error&&<div className="error-panel" role="alert"><AlertCircle size={20}/><div><strong>We couldn’t continue</strong><p>{error}</p></div></div>}
@@ -60,9 +62,7 @@ function ToolWorkspace({tool}:{tool:NonNullable<ReturnType<typeof getTool>>}) {
       {(phase==='configure'||phase==='processing')&&<><FileQueue files={files} setFiles={setFiles} canReorder={Boolean(tool.multiple)} onAddFiles={tool.kind==='merge'?acceptFiles:undefined}/>{tool.kind==='merge'&&<><input ref={mergeInput} type="file" accept="application/pdf" multiple hidden onChange={(event)=>{acceptFiles(Array.from(event.target.files??[]));event.currentTarget.value='' }}/><button className="secondary-button add-more-button" disabled={phase==='processing'} onClick={()=>mergeInput.current?.click()}>Add More PDFs</button>{files.length<2&&<p className="setting-note">Add at least one more PDF to merge.</p>}</>}<div className="configure-panel"><div className="configure-title"><div><span className="step-label">Step 2</span><h2>Choose your settings</h2></div><button className="text-button" onClick={reset}><Trash2 size={16}/> Clear all</button></div><ToolControls file={files[0]} tool={tool} pageCount={pageCount} selected={selected} setSelected={setSelected} order={order} setOrder={setOrder} range={range} setRange={setRange} splitMode={splitMode} setSplitMode={setSplitMode} interval={interval} setInterval={setInterval} angle={angle} setAngle={setAngle} options={options} setOptions={setOptions}/><div className="process-bar"><span><LockKeyhole size={16}/> Runs locally in this tab</span><button className="primary-button" disabled={phase==='processing'||(tool.kind==='merge'&&files.length<2)} onClick={process}>{phase==='processing'?`Processing… ${progress}%`:tool.kind==='merge'?'Merge PDFs':`${isAnalyzer?'Analyze':'Process'} ${files.length>1?`${files.length} files`:''}`}</button></div></div></>}
       {phase==='done'&&<div className="result-panel"><span className="success-icon"><Check size={30}/></span><span className="kicker">Complete</span><h2>{isAnalyzer?'Your report is ready':'Your file is ready'}</h2><p>Processing finished locally. Nothing was sent to PDFHope.</p>{report&&<ReportView report={report}/>} {result&&<button className="primary-button download-button" onClick={()=>downloadBlob(result,resultName)}><Download size={19}/> Download {isAnalyzer?'report':'file'}</button>}<button className="secondary-button" onClick={reset}><RotateCcw size={17}/> Start over</button></div>}
     </section>
-    <section className="tool-copy"><article><span className="kicker">How it works</span><h2>Simple, local, predictable</h2><ol>{tool.instructions.map((item,index)=><li key={item}><span>{index+1}</span><p>{item}</p></li>)}</ol></article><aside><ShieldCheck size={24}/><h3>Privacy for this tool</h3><p>Selected files are read by browser APIs and processed in memory on your device. This page has no file-upload endpoint.</p><h3>Limitations</h3><p>{tool.limitations}</p></aside></section>
-    <section className="faq"><span className="kicker">Questions</span><h2>{tool.name} FAQ</h2><details><summary>Are my files uploaded?</summary><p>No. This implementation processes supported files in your browser. Network requests may still load the website’s code, but your document bytes are not sent to PDFHope.</p></details><details><summary>Why can a large PDF fail?</summary><p>Browsers have device-dependent memory limits. Close other heavy tabs, try a smaller document, or process fewer pages at once.</p></details><details><summary>Does the original file change?</summary><p>No. PDFHope creates a new downloadable file and does not modify the original on your device.</p></details></section>
-    <section className="related"><h2>Related {tool.category.toLowerCase()} tools</h2><div>{related.map((item)=><Link key={item.slug} to={`/${item.slug}`}><ToolIcon slug={item.slug} compact/><span><strong>{item.name}</strong><small>{item.short}</small></span></Link>)}</div></section>
+    <ToolSeoContent slug={tool.slug}/>
   </main>
 }
 

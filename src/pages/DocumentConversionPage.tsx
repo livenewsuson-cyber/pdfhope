@@ -1,10 +1,12 @@
-import { AlertCircle, ArrowLeft, Check, Download, FileText, FileUp, LockKeyhole, RotateCcw, ShieldCheck, Trash2 } from 'lucide-react'
+import { AlertCircle, ArrowLeft, Check, Download, FileUp, LockKeyhole, RotateCcw, ShieldCheck, Trash2 } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { convertDocument, type ConversionMode, outputName, validateConversionFile } from '../lib/conversion'
 import { downloadBlob, formatBytes } from '../lib/files'
 import { ToolIcon } from '../components/ToolIcon'
 import { useSeo } from '../hooks/useSeo'
+import { ToolSeoContent } from '../components/ToolSeoContent'
+import { toolSeo } from '../data/toolSeo'
 
 type Status = 'empty' | 'ready' | 'uploading' | 'analyzing' | 'converting' | 'preparing' | 'complete'
 
@@ -29,7 +31,8 @@ export function DocumentConversionPage({ mode }: { mode: ConversionMode }) {
 
 function DocumentConversionWorkspace({ mode }: { mode: ConversionMode }) {
   const info = copy[mode]
-  useSeo(info.seoTitle, info.seoDescription, `/${mode}`, true, true)
+  const seo = toolSeo[mode]
+  useSeo(seo.seoTitle, seo.metaDescription, `/${mode}`, true, true)
   const input = useRef<HTMLInputElement>(null)
   const runId = useRef(0)
   const [file, setFile] = useState<File | null>(null)
@@ -80,11 +83,6 @@ function DocumentConversionWorkspace({ mode }: { mode: ConversionMode }) {
         </div></div>}
       {file && status === 'complete' && result && <div className="result-panel"><span className="success-icon"><Check size={30}/></span><span className="kicker">Complete</span><h2>Your {mode === 'word-to-pdf' ? 'PDF' : 'Word document'} is ready</h2><p>Your file was converted in memory and was not permanently stored by PDFHope or the conversion provider.</p><button className="primary-button download-button" onClick={() => downloadBlob(result, outputName(file.name, mode))}><Download size={19}/> {info.download}</button><button className="secondary-button" onClick={reset}><RotateCcw size={17}/> Try another file</button></div>}
     </section>
-    <ConversionContent mode={mode}/><section className="related"><h2>Related conversion tools</h2><div><Link to={mode === 'word-to-pdf' ? '/pdf-to-word' : '/word-to-pdf'}><FileText size={20}/><span><strong>{mode === 'word-to-pdf' ? 'PDF to Word' : 'Word to PDF'}</strong><small>Convert in the other direction</small></span></Link><Link to="/pdf-to-jpg"><FileText size={20}/><span><strong>PDF to JPG</strong><small>Render PDF pages as images</small></span></Link><Link to="/images-to-pdf"><FileText size={20}/><span><strong>Images to PDF</strong><small>Combine images into a PDF</small></span></Link></div></section>
+    <ToolSeoContent slug={mode}/>
   </main>
-}
-
-function ConversionContent({ mode }: { mode: ConversionMode }) {
-  if (mode === 'word-to-pdf') return <><section className="tool-copy"><article><span className="kicker">How it works</span><h2>How to Convert Word to PDF</h2><ol><li><span>1</span><p>Select a DOC or DOCX file up to 20 MB.</p></li><li><span>2</span><p>Choose Convert to PDF and keep the tab open while the document is processed.</p></li><li><span>3</span><p>Download the PDF and review it before sharing.</p></li></ol></article><aside><ShieldCheck size={24}/><h3>Secure Online Conversion</h3><p>Your document is encrypted in transit and processed in memory. PDFHope does not permanently store uploads or results.</p><h3>High-Quality Word Conversion</h3><p>The conversion engine is designed to retain fonts, styles, tables, images, links, headers, footers, page breaks, margins, and orientation where the source permits.</p></aside></section><section className="faq"><span className="kicker">Why PDF?</span><h2>Why Convert Word Documents to PDF?</h2><p>PDF keeps a stable page appearance across devices and makes a finished document easier to print or share without accidental edits.</p><h2>Word to PDF FAQ</h2><details><summary>Are DOC and DOCX supported?</summary><p>Yes. Both modern DOCX and legacy DOC documents are accepted.</p></details><details><summary>Will every font look identical?</summary><p>Embedded and commonly available fonts generally convert accurately. A missing or restricted font may be substituted, so review the result before publishing.</p></details><details><summary>Are files stored?</summary><p>No. PDFHope streams the file through its Cloudflare Worker to the conversion provider in zero-storage mode, and streams the result back.</p></details></section></>
-  return <><section className="tool-copy"><article><span className="kicker">How it works</span><h2>How to Convert PDF to Word</h2><ol><li><span>1</span><p>Select a PDF file up to 20 MB.</p></li><li><span>2</span><p>Choose Convert to Word. Automatic OCR is applied when scanned pages are detected.</p></li><li><span>3</span><p>Download the DOCX, open it in Word, and review the editable content.</p></li></ol></article><aside><FileText size={24}/><h3>Create Editable Word Documents</h3><p>A layout-aware conversion engine reconstructs paragraphs, headings, tables, images, lists, columns, links, and page structure instead of merely extracting plain text.</p><h3>PDF to DOCX Conversion</h3><p>The default flowing layout favors useful editing while preserving the source structure as accurately as possible.</p></aside></section><section className="faq"><span className="kicker">Recognition</span><h2>Scanned PDF and OCR</h2><p>Automatic OCR detects image-only pages and recognizes editable text where possible. Results depend on scan clarity, language detection, rotation, and handwriting.</p><h2>PDF to Word FAQ</h2><details><summary>Will the DOCX be editable?</summary><p>Yes. Text is reconstructed as editable Word content. Complex areas may use tables, sections, or text boxes to preserve layout.</p></details><details><summary>What happens with a password-protected PDF?</summary><p>Remove the password with permission before uploading. PDFHope does not ask for or retain PDF passwords.</p></details><details><summary>Can OCR recognize every scan?</summary><p>No. Low resolution, skew, handwriting, unusual scripts, and damaged scans can reduce accuracy. PDFHope reports a failure instead of returning an empty document when the provider cannot convert the file.</p></details></section></>
 }

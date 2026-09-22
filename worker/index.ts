@@ -6,6 +6,7 @@ interface RateLimitBinding {
 }
 
 interface Env {
+  ASSETS?: { fetch(request: Request): Promise<Response> }
   CONVERTAPI_TOKEN?: string
   CONVERSION_RATE_LIMITER: RateLimitBinding
 }
@@ -155,6 +156,22 @@ async function handleConversion(request: Request, env: Env, mode: Mode, requestI
 
 export default {
   async fetch(request: Request, env: Env) {
+    const url = new URL(request.url)
+    if (url.hostname === 'www.pdfhope.com' || (url.hostname === 'pdfhope.com' && url.protocol !== 'https:')) {
+      url.hostname = 'pdfhope.com'; url.protocol = 'https:'
+      return Response.redirect(url.toString(), 301)
+    }
+    if (!url.pathname.startsWith('/api/')) {
+      if (!env.ASSETS) return new Response('Not found', { status: 404 })
+      const asset = await env.ASSETS.fetch(request)
+      const response = new Response(asset.body, asset)
+      if (url.pathname === '/404' || url.pathname === '/404.html') {
+        return new Response(response.body, { status: 404, headers: response.headers })
+      }
+      if (response.headers.get('Content-Type')?.includes('text/html')) response.headers.set('Cache-Control', 'no-cache')
+      if (url.hostname.endsWith('.workers.dev')) response.headers.set('X-Robots-Tag', 'noindex, nofollow')
+      return response
+    }
     const requestId = crypto.randomUUID()
     const mode = routes[new URL(request.url).pathname]
     if (!mode) return jsonError(404, 'not_found', requestId)
