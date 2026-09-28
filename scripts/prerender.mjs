@@ -6,7 +6,7 @@ import { createServer } from 'vite'
 globalThis.localStorage = { getItem: () => null }
 globalThis.matchMedia = () => ({ matches: false })
 process.env.PDFHOPE_PLAIN_VITE = '1'
-const server = await createServer({ server: { middlewareMode: true }, appType: 'custom' })
+const server = await createServer({ configLoader: 'runner', server: { middlewareMode: true }, appType: 'custom' })
 try {
   const { render, paths } = await server.ssrLoadModule('/src/prerender.tsx')
   const output = resolve('dist/client')
