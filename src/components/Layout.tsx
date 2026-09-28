@@ -5,7 +5,7 @@ import { Brand } from './Brand'
 import { MegaMenu } from './MegaMenu'
 import { MobileNavigation } from './MobileNavigation'
 import { tools } from '../data/tools'
-import { navigationGroups } from '../data/navigation'
+import { navigationGroups, type NavigationGroup } from '../data/navigation'
 import { useWebMcp } from '../hooks/useWebMcp'
 
 const focusable = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
@@ -15,7 +15,7 @@ export function Layout() {
   const { pathname, search: routeSearch } = useLocation()
   const [dark, setDark] = useState(() => localStorage.getItem('pdfhope-theme') === 'dark' || (!localStorage.getItem('pdfhope-theme') && matchMedia('(prefers-color-scheme: dark)').matches))
   const [mobileMenu, setMobileMenu] = useState(false)
-  const [megaMenu, setMegaMenu] = useState<string | null>(null)
+  const [megaMenu, setMegaMenu] = useState<NavigationGroup['id'] | null>(null)
   const [search, setSearch] = useState(false)
   const [query, setQuery] = useState('')
   const headerRef = useRef<HTMLDivElement>(null)
@@ -82,7 +82,7 @@ export function Layout() {
           <button ref={menuButtonRef} className="icon-button mobile-menu-toggle" aria-label={mobileMenu ? 'Close navigation' : 'Open navigation'} aria-expanded={mobileMenu} aria-controls="mobile-navigation-dialog" onClick={() => { setSearch(false); setMegaMenu(null); setMobileMenu(!mobileMenu) }}>{mobileMenu ? <X size={19} /> : <Menu size={19} />}</button>
         </div>
       </header>
-      {megaMenu && <MegaMenu onNavigate={closeNavigation} />}
+      {megaMenu && <MegaMenu activeGroup={megaMenu} onNavigate={closeNavigation} />}
     </div>
     <Outlet />
     <footer><div><Link className="brand footer-brand" to="/" aria-label="PDFHope home"><Brand /></Link><p>Every PDF tool you need—built for speed, clarity, and privacy-conscious processing.</p></div><div><strong>Product</strong><Link to="/tools">All tools</Link><Link to="/pdf-health-check">PDF Health Check</Link><Link to="/privacy">Privacy</Link><Link to="/security">Security</Link></div><div><strong>Company</strong><Link to="/about">About</Link><Link to="/contact">Contact</Link><Link to="/accessibility">Accessibility</Link><Link to="/cookie-policy">Cookie policy</Link></div><div><strong>Legal</strong><Link to="/terms">Terms of use</Link><Link to="/privacy-policy">Privacy policy</Link><a href="/sitemap.xml">Sitemap</a><span className="footer-note"><Heart size={14} /> Made for useful PDFs</span></div></footer>

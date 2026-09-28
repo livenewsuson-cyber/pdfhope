@@ -8,7 +8,7 @@ import { ToolIcon } from '../components/ToolIcon'
 import { useSeo } from '../hooks/useSeo'
 
 export function HomePage() {
-  useSeo('Every PDF tool you need', 'Fast, private PDF tools that process files locally in your browser.', '/')
+  useSeo('Every PDF tool you need', 'Fast PDF tools to convert, organize, edit and inspect documents, with local processing where supported and secure server conversion when needed.', '/')
   const [query, setQuery] = useState('')
   const navigate = useNavigate()
   const recent = useMemo(() => {
