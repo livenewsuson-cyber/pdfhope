@@ -254,3 +254,45 @@ footer{max-width:1240px;gap:44px;padding:58px 28px;margin-top:72px}
   .home-tool-filters button{flex:none;padding:0 13px}
   .tools-section .tool-grid{grid-template-columns:minmax(0,1fr)}
 }
+
+/* One card language for quick homepage discovery and the fuller tool catalog. */
+.tool-card.tool-card--compact{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:13px;min-height:110px;padding:18px 19px}
+.tool-card--compact .tool-card-top{grid-column:1}
+.tool-card--compact .tool-card-content{grid-column:2;min-width:0}
+.tool-card--compact .tool-card-footer{grid-column:3;align-self:center}
+.tool-card-title-row{display:flex;align-items:center;flex-wrap:wrap;gap:3px 8px;min-width:0}
+.tool-card-title-row strong,.tool-card-title-row h2{color:var(--ink);overflow-wrap:anywhere}
+.tool-card--compact .tool-card-title-row strong{font-size:1rem;line-height:1.3;font-weight:800}
+.tool-card-description{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;max-width:100%;margin:5px 0 0;color:var(--text-muted);font-size:.83rem;line-height:1.42;overflow-wrap:anywhere}
+.tool-card-badge{display:inline-flex;align-items:center;min-height:22px;padding:2px 7px;border:1px solid color-mix(in srgb,var(--line) 75%,var(--tool-tone));border-radius:999px;background:color-mix(in srgb,var(--tool-tint) 55%,var(--surface));color:var(--tool-tone);font-size:.67rem;font-weight:800;line-height:1;white-space:nowrap}
+[data-theme="dark"] .tool-card .tool-card-badge{color:var(--tool-tone)}
+.tool-card-open{display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;color:var(--text-muted);font-size:.82rem;font-weight:800}
+[data-theme="dark"] .tool-card .tool-card-open{color:var(--text-muted)}
+.tool-card-open svg{display:block;transition:transform 160ms ease,color 160ms ease}
+.tool-card:hover .tool-card-open,.tool-card:focus-visible .tool-card-open{color:var(--tool-tone)}
+[data-theme="dark"] .tool-card:hover .tool-card-open,[data-theme="dark"] .tool-card:focus-visible .tool-card-open{color:var(--tool-tone)}
+.tool-card:hover .tool-card-open svg,.tool-card:focus-visible .tool-card-open svg{transform:translateX(3px)}
+.listing-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.listing-grid>.tool-card.catalog-card{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr auto;gap:0;min-width:0;min-height:216px;padding:22px}
+.catalog-card .tool-card-top{display:flex;align-items:center;gap:9px;min-width:0}
+.catalog-card .tool-card-top .tool-icon{width:45px;height:45px;padding:10px;border-radius:13px}
+.tool-card-category{min-width:0;padding:5px 8px;border-radius:999px;background:var(--soft);color:var(--text-secondary);font-size:.68rem;font-weight:750;line-height:1.2;white-space:nowrap}
+[data-theme="dark"] .tool-card .tool-card-category{color:var(--text-secondary)}
+.catalog-card .tool-card-top .tool-card-badge{margin-left:auto}
+.catalog-card .tool-card-content{min-width:0;margin:15px 0 16px}
+.catalog-card .tool-card-title-row h2{margin:0;font-size:1.25rem;line-height:1.25;letter-spacing:-.025em}
+.catalog-card .tool-card-description{font-size:.87rem;line-height:1.48}
+.catalog-card .tool-card-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px 12px;min-width:0;padding-top:12px;border-top:1px solid var(--line)}
+.tool-card-processing{display:inline-flex;align-items:center;gap:6px;color:var(--text-secondary);font-size:.72rem;font-weight:700;white-space:nowrap}
+[data-theme="dark"] .tool-card .tool-card-processing{color:var(--text-secondary)}
+.tool-card-processing::before{content:"";width:6px;height:6px;flex:none;border-radius:50%;background:var(--tool-tone)}
+.catalog-card .tool-card-open{color:var(--accent-dark)}
+[data-theme="dark"] .catalog-card .tool-card-open{color:var(--accent-dark)}
+@media(max-width:1100px){.listing-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){
+  .listing-grid{grid-template-columns:minmax(0,1fr)}
+  .tool-card.tool-card--compact{min-height:96px;padding:15px 16px;gap:12px}
+  .tool-card--compact .tool-card-top .tool-icon{width:42px;height:42px;padding:10px}
+  .listing-grid>.tool-card.catalog-card{min-height:200px;padding:20px}
+}
+@media(prefers-reduced-motion:reduce){.tool-card-open svg{transition:none}.tool-card:hover .tool-card-open svg,.tool-card:focus-visible .tool-card-open svg{transform:none}}

@@ -22,7 +22,7 @@ export function HomeToolDiscovery() {
         {filter.label}<span className="home-filter-count" aria-hidden="true">{filter.tools.length}</span>
       </button>)}
     </div>
-    <div id="home-tool-grid" className="tool-grid">{visibleTools.map((tool) => <ToolCard key={tool.slug} tool={tool} />)}</div>
+    <div id="home-tool-grid" className="tool-grid">{visibleTools.map((tool) => <ToolCard key={tool.slug} tool={tool} showBadge={activeFilter !== 'popular'} />)}</div>
     {activeFilter === 'all' && selected.tools.length > INITIAL_ALL_LIMIT && <button className="home-show-more" type="button" aria-controls="home-tool-grid" aria-expanded={expandedAll} onClick={() => setExpandedAll((current) => !current)}>{expandedAll ? 'Show fewer' : `Show all ${selected.tools.length} tools`}</button>}
   </section>
 }
