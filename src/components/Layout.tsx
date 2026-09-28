@@ -1,4 +1,4 @@
-import { Command, Heart, Menu, Moon, Search, Sun, X } from 'lucide-react'
+import { ChevronDown, Command, Heart, Menu, Moon, Search, Sun, X } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Brand } from './Brand'
@@ -111,13 +111,13 @@ export function Layout() {
       <header className="header">
         <Link className="brand" to="/" aria-label="PDFHope home" onPointerEnter={closeMenuSoon}><Brand /></Link>
         <nav className="desktop-navigation" aria-label="Primary">
-          <NavLink to="/tools" aria-haspopup="true" aria-expanded={megaMenu === 'all'} aria-controls="desktop-mega-menu" onPointerEnter={(event) => { if (event.pointerType !== 'touch') showMenuSoon('all') }} onFocus={() => { if (keyboardFocus.current) showMenu('all') }}>All Tools</NavLink>
+          <NavLink to="/tools" aria-haspopup="true" aria-expanded={megaMenu === 'all'} aria-controls="desktop-mega-menu" onPointerEnter={(event) => { if (event.pointerType !== 'touch') showMenuSoon('all') }} onFocus={() => { if (keyboardFocus.current) showMenu('all') }}>All Tools<ChevronDown size={14} aria-hidden="true" /></NavLink>
           {navigationGroups.map((group) => <button key={group.id} type="button" aria-haspopup="true" aria-expanded={megaMenu === group.id} aria-controls="desktop-mega-menu" onPointerEnter={(event) => { if (event.pointerType !== 'touch') showMenuSoon(group.id) }} onFocus={() => { if (keyboardFocus.current) showMenu(group.id) }} onClick={() => {
             const justOpenedByHover = megaMenu === group.id && Date.now() - lastHoverOpen.current < 250
             cancelMenuOpen()
             cancelMenuClose()
             setMegaMenu((open) => justOpenedByHover ? group.id : open === group.id ? null : group.id)
-          }}>{group.label}</button>)}
+          }}>{group.label}<ChevronDown size={14} aria-hidden="true" /></button>)}
         </nav>
         <div className="header-actions" onPointerEnter={closeMenuSoon}>
           <button ref={searchButtonRef} className="icon-button" onClick={openSearch} aria-label="Search tools"><Search size={19} /></button>
