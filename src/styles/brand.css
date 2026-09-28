@@ -120,7 +120,8 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 .mega-menu--category[data-mode="advanced"]{width:min(650px,calc(100vw - 32px))}
 .mega-menu-intro{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:5px 20px;padding:0 4px 18px;border-bottom:1px solid var(--line)}
 .mega-menu-intro .kicker{grid-row:1}.mega-menu-intro>strong{grid-row:2;font-size:1.2rem}.mega-menu-intro p{grid-column:2;grid-row:1/3;margin:0;color:var(--muted);line-height:1.5}.mega-menu-intro>a{grid-column:3;grid-row:1/3;display:flex;align-items:center;gap:7px;color:var(--accent-dark);font-size:.85rem;font-weight:800}
-.mega-menu-groups{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:18px;padding-top:20px}
+.mega-menu-groups{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:18px;padding-top:20px}
+@media(min-width:901px) and (max-width:1240px){.mega-menu--all .mega-menu-groups{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .mega-menu-group{margin:-10px -8px;padding:10px 8px;border:1px solid transparent;border-radius:15px}
 .mega-menu-heading{min-height:66px;padding:0 5px}.mega-menu-heading h2{font-size:.76rem;letter-spacing:.09em;text-transform:uppercase}.mega-menu-heading p{margin:6px 0 0;color:var(--muted);font-size:.72rem;line-height:1.35}
 .mega-menu-links{display:grid;gap:2px}.mega-menu-links>a{display:flex;align-items:center;gap:9px;min-height:48px;padding:5px;border-radius:11px}.mega-menu-links>a:hover,.mega-menu-links>a:focus-visible{background:var(--soft)}.mega-menu-links .tool-icon{width:34px;height:34px;padding:8px;border-radius:10px}.mega-menu-links span{min-width:0}.mega-menu-links strong,.mega-menu-links small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mega-menu-links strong{font-size:.78rem}.mega-menu-links small{margin-top:2px;color:var(--muted);font-size:.66rem}
@@ -296,3 +297,24 @@ footer{max-width:1240px;gap:44px;padding:58px 28px;margin-top:72px}
   .listing-grid>.tool-card.catalog-card{min-height:200px;padding:20px}
 }
 @media(prefers-reduced-motion:reduce){.tool-card-open svg{transition:none}.tool-card:hover .tool-card-open svg,.tool-card:focus-visible .tool-card-open svg{transform:none}}
+
+/* Compress PDF controls use the existing surface and accent tokens. */
+.compression-settings fieldset{border:0;padding:0;margin:22px 0 0;min-width:0}
+.compression-settings legend{font-weight:800;margin-bottom:12px}
+.compression-file-info{display:flex;gap:24px;padding:16px 18px;border:1px solid var(--line);border-radius:12px;background:var(--soft)}
+.compression-file-info span,.compression-metrics span{color:var(--muted);font-size:.8rem}
+.compression-file-info strong{display:block;margin-top:4px;color:var(--ink);font-size:1.1rem}
+.compression-presets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.compression-presets label{display:flex;align-items:flex-start;gap:10px;padding:15px;border:1px solid var(--line);border-radius:13px;cursor:pointer;background:var(--surface)}
+.compression-presets label.selected{border-color:var(--accent);background:var(--soft);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 13%,transparent)}
+.compression-presets input{accent-color:var(--accent-dark);margin-top:4px}
+.compression-presets strong,.compression-presets small{display:block}
+.compression-presets small{margin-top:6px;color:var(--muted);line-height:1.5;font-size:.78rem}
+.compression-warning,.compression-signature-note,.compression-progress{margin:16px 0 0;color:var(--muted);font-size:.84rem;line-height:1.55}
+.compression-warning{padding:12px 14px;border:1px solid color-mix(in srgb,var(--danger) 30%,var(--line));border-radius:10px;background:color-mix(in srgb,var(--danger) 6%,var(--surface));color:var(--ink)}
+.compression-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;max-width:670px;margin:25px auto;text-align:left}
+.compression-metrics>div{padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--soft)}
+.compression-metrics strong{display:block;margin-top:5px;color:var(--ink);font-size:1.15rem}
+.compression-result-detail{font-size:.83rem}
+@media(max-width:760px){.compression-presets,.compression-metrics{grid-template-columns:1fr}.compression-file-info{flex-wrap:wrap}.compression-result{padding:44px 16px}}
+@media(max-width:1180px){.header .desktop-navigation{display:none}.mobile-menu-toggle,.header-actions .mobile-menu-toggle:first-child{display:grid}.header-actions .icon-button[aria-label="Search tools"]{display:grid}.mega-menu{display:none}}

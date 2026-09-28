@@ -11,7 +11,7 @@ const renderMenu = (mode: MegaMenuMode) => renderToStaticMarkup(
 describe('desktop mega menu content', () => {
   it('shows every group and the all-tools link in the full menu', () => {
     const html = renderMenu('all')
-    expect(html.match(/class="mega-menu-group"/g)).toHaveLength(5)
+    expect(html.match(/class="mega-menu-group"/g)).toHaveLength(navigationGroups.length)
     expect(html).toContain('Explore all tools')
     for (const group of navigationGroups) expect(html).toContain(`href="/${group.tools[0].slug}"`)
   })

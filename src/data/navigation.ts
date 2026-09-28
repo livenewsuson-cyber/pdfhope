@@ -2,7 +2,7 @@ import { getTool } from './tools'
 import type { ToolDefinition } from '../types/tools'
 
 export type NavigationGroup = {
-  id: 'convert' | 'organize' | 'edit' | 'intelligence' | 'advanced'
+  id: 'convert' | 'organize' | 'optimize' | 'edit' | 'intelligence' | 'advanced'
   label: string
   description: string
   tools: ToolDefinition[]
@@ -28,6 +28,12 @@ export const navigationGroups: NavigationGroup[] = [
     tools: toolList(['merge-pdf', 'split-pdf', 'extract-pdf-pages', 'delete-pdf-pages', 'reorder-pdf', 'rotate-pdf']),
   },
   {
+    id: 'optimize',
+    label: 'Optimize',
+    description: 'Reduce file size and understand optimization opportunities.',
+    tools: toolList(['compress-pdf', 'pdf-size-breakdown']),
+  },
+  {
     id: 'edit',
     label: 'Edit',
     description: 'Add useful content to a finished PDF.',
@@ -37,7 +43,7 @@ export const navigationGroups: NavigationGroup[] = [
     id: 'intelligence',
     label: 'PDF Intelligence',
     description: 'Read, inspect and understand document structure.',
-    tools: toolList(['pdf-health-check', 'blank-page-detector', 'duplicate-page-finder', 'page-size-analyzer', 'orientation-analyzer', 'pdf-size-breakdown', 'pdf-reader']),
+    tools: toolList(['pdf-health-check', 'blank-page-detector', 'duplicate-page-finder', 'page-size-analyzer', 'orientation-analyzer', 'pdf-reader']),
   },
   {
     id: 'advanced',

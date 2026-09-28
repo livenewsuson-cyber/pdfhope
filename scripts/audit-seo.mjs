@@ -11,7 +11,10 @@ const read = async path => {
 const sitemap = await read('/sitemap.xml')
 assert.equal(sitemap.status, 200)
 const urls = [...sitemap.text.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => match[1])
-assert.equal(urls.length, 39)
+const toolSlugs = [...(await readFile('src/data/tools.ts', 'utf8')).matchAll(/\bslug:'([^']+)'/g)].map(match => match[1])
+const expectedRoutes = toolSlugs.length + 10 // homepage, catalog, and eight information pages
+assert.equal(urls.length, expectedRoutes)
+for (const slug of toolSlugs) assert.ok(urls.includes(`https://pdfhope.com/${slug}`), `Missing tool route: ${slug}`)
 assert.equal(new Set(urls).size, urls.length)
 const results = [], links = new Set(), titles = new Set(), descriptions = new Set()
 for (const url of urls) {
@@ -69,4 +72,4 @@ if (origin === 'https://pdfhope.com') {
   }
 }
 if (artifact) await writeFile(artifact, JSON.stringify({ origin: origin || 'local build', checkedAt: new Date().toISOString(), passed: true, results }, null, 2))
-console.log(`PASS: ${results.length} unique indexable pages; 29 tool schemas, how-to sections and FAQs; crawlable internal links; sitemap and robots${origin ? '; HTTP statuses and real 404s' : ''}.`)
+console.log(`PASS: ${results.length} unique indexable pages; ${toolSlugs.length} tool schemas, how-to sections and FAQs; crawlable internal links; sitemap and robots${origin ? '; HTTP statuses and real 404s' : ''}.`)

@@ -21,6 +21,21 @@ const make = (slug: string, draft: Draft): ToolSeoContent => {
 }
 
 export const toolSeo: Record<string, ToolSeoContent> = {
+  'compress-pdf': make('compress-pdf', {
+    seoTitle:'Compress PDF Online – Reduce PDF File Size | PDFHope',
+    metaDescription:'Compress PDF files locally in your browser with Recommended, Strong, or Maximum compression. Compare before and after file size and download a smaller copy when possible.',
+    intro:'Reduce PDF file size with measured results and clear quality choices.',
+    overview:['Recommended keeps text-based pages as PDF content where practical and recompresses likely scanned or image-only pages. Strong and Maximum render pages into smaller JPEG-backed PDF pages.','Every result is compared with the original byte size. If the output is not smaller, PDFHope says so rather than claiming a reduction.'],
+    useCases:['Shrink a scan-heavy PDF for sharing.','Make a smaller visual review copy.','Check whether an existing PDF is already compact.'],
+    supportedFormats:'Accepts one PDF and outputs a new PDF only when it is smaller.',
+    features:['Three explained presets','Local page-by-page processing','Actual before-and-after size comparison','Text-page preservation in Recommended mode'],
+    qualityOrOutputNotes:'Recommended uses approximately 145 DPI and JPEG quality 80% for likely image-only pages. Strong uses approximately 125 DPI and 68%; Maximum uses approximately 105 DPI and 55%. Oversized pages are capped to protect browser memory.',
+    limitations:'Compression is not guaranteed. Strong and Maximum flatten selectable text, links, forms, annotations and accessibility structure. Rewriting can invalidate digital signatures. Keep the original and inspect the copy before sharing.',
+    tips:['Start with Recommended if searchable text matters.','Use Strong only when a smaller visual copy matters more than interactive features.','Review fine print and photos after Maximum compression.'],
+    troubleshooting:[q('Why is there no smaller file?','The source may already be compact or contain mostly text. Try Strong if flattening its document features is acceptable.'),q('Why does Recommended preserve some pages?','It avoids rasterizing pages with usable text, and leaves image-free vector pages intact.'),q('Why can compression be slow?','Pages are analyzed and rendered one at a time in your browser.')],
+    relatedTools:[r('pdf-size-breakdown','inspect file size','Review likely optimization opportunities.'),r('pdf-reader','review the output','Check readability and page order.'),r('pdf-to-jpg','export page images','Create separate image previews.')],
+    faq:[q('Is my PDF uploaded?','No. Compression runs locally in this browser tab.'),q('Does compression reduce quality?','Recompressed pages can lose fine detail, especially in Strong and Maximum. Review the copy at normal and high zoom.'),q('Will text remain selectable?','Recommended preserves pages with usable text where practical. Strong and Maximum flatten pages and generally remove selectability and searchability.'),q('Does it always make files smaller?','No. A smaller copy is offered only when the actual output byte count is lower.'),q('Does compression remove pages?','No. The new PDF keeps the same page count and order.'),q('Can I compress scanned PDFs?','Yes. Image-only scans are the main target for Recommended compression.'),q('Are digital signatures preserved?','No guarantee. Creating a compressed copy can invalidate existing digital signatures.')]
+  }),
   'merge-pdf': make('merge-pdf', {
     seoTitle:'Merge PDF Files Online Privately | PDFHope', metaDescription:'Merge PDF files in your chosen order directly in your browser. Combine contracts, reports, invoices, and scans into one downloadable PDF.', intro:'Combine two or more PDF files into one ordered document.',
     overview:['Add complete PDF files, arrange them in the required sequence, and create one combined document. Pages inside each source keep their existing order.'],

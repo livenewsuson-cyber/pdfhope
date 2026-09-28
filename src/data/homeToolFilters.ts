@@ -8,6 +8,7 @@ type FilterOption = { id: HomeToolFilter; label: string; heading: string; descri
 const groupHeadings: Record<NavigationGroup['id'], string> = {
   convert: 'Convert PDF & document files',
   organize: 'Organize PDF pages',
+  optimize: 'Optimize PDF files',
   edit: 'Edit and enhance PDFs',
   intelligence: 'Understand your PDF',
   advanced: 'Advanced PDF workflows',

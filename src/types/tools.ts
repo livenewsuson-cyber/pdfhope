@@ -5,7 +5,7 @@ export type ToolKind =
   | 'images-to-pdf' | 'pdf-to-image' | 'page-numbers' | 'watermark'
   | 'metadata' | 'health' | 'blank' | 'page-size' | 'orientation'
   | 'duplicate' | 'interleave' | 'deinterleave' | 'n-up' | 'contact-sheet'
-  | 'word-to-pdf' | 'pdf-to-word'
+  | 'word-to-pdf' | 'pdf-to-word' | 'compress'
 
 export interface ToolDefinition {
   slug: string
