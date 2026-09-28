@@ -5,7 +5,8 @@ import { Brand } from './Brand'
 import { MegaMenu } from './MegaMenu'
 import { MobileNavigation } from './MobileNavigation'
 import { tools } from '../data/tools'
-import { navigationGroups, type NavigationGroup } from '../data/navigation'
+import { navigationGroups } from '../data/navigation'
+import type { MegaMenuMode } from './MegaMenu'
 import { useWebMcp } from '../hooks/useWebMcp'
 
 const focusable = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
@@ -15,7 +16,7 @@ export function Layout() {
   const { pathname, search: routeSearch } = useLocation()
   const [dark, setDark] = useState(() => localStorage.getItem('pdfhope-theme') === 'dark' || (!localStorage.getItem('pdfhope-theme') && matchMedia('(prefers-color-scheme: dark)').matches))
   const [mobileMenu, setMobileMenu] = useState(false)
-  const [megaMenu, setMegaMenu] = useState<NavigationGroup['id'] | null>(null)
+  const [megaMenu, setMegaMenu] = useState<MegaMenuMode | null>(null)
   const [search, setSearch] = useState(false)
   const [query, setQuery] = useState('')
   const headerRef = useRef<HTMLDivElement>(null)
@@ -23,11 +24,47 @@ export function Layout() {
   const searchButtonRef = useRef<HTMLButtonElement>(null)
   const mobileDialogRef = useRef<HTMLDivElement>(null)
   const searchDialogRef = useRef<HTMLElement>(null)
+  const menuCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const menuOpenTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastHoverOpen = useRef(0)
+  const keyboardFocus = useRef(false)
+
+  const cancelMenuOpen = () => {
+    if (menuOpenTimer.current) clearTimeout(menuOpenTimer.current)
+    menuOpenTimer.current = null
+  }
+  const cancelMenuClose = () => {
+    if (menuCloseTimer.current) clearTimeout(menuCloseTimer.current)
+    menuCloseTimer.current = null
+  }
+  const closeMenuSoon = () => {
+    cancelMenuOpen()
+    cancelMenuClose()
+    menuCloseTimer.current = setTimeout(() => setMegaMenu(null), 150)
+  }
+  const showMenu = (mode: MegaMenuMode) => {
+    cancelMenuOpen()
+    cancelMenuClose()
+    setMegaMenu(mode)
+  }
+  const showMenuSoon = (mode: MegaMenuMode) => {
+    cancelMenuOpen()
+    cancelMenuClose()
+    menuOpenTimer.current = setTimeout(() => {
+      lastHoverOpen.current = Date.now()
+      setMegaMenu(mode)
+      menuOpenTimer.current = null
+    }, 75)
+  }
 
   useLayoutEffect(() => { window.scrollTo({ top: 0, left: 0, behavior: 'auto' }) }, [pathname, routeSearch])
   useEffect(() => { const previous = history.scrollRestoration; history.scrollRestoration = 'manual'; return () => { history.scrollRestoration = previous } }, [])
   useEffect(() => { document.documentElement.dataset.theme = dark ? 'dark' : 'light'; localStorage.setItem('pdfhope-theme', dark ? 'dark' : 'light') }, [dark])
   useEffect(() => { setMegaMenu(null); setMobileMenu(false); setSearch(false) }, [pathname, routeSearch])
+  useEffect(() => () => {
+    if (menuCloseTimer.current) clearTimeout(menuCloseTimer.current)
+    if (menuOpenTimer.current) clearTimeout(menuOpenTimer.current)
+  }, [])
   useEffect(() => {
     if (!mobileMenu && !search) return
     const previous = document.body.style.overflow
@@ -45,6 +82,7 @@ export function Layout() {
   }, [megaMenu])
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Tab') keyboardFocus.current = true
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); setMobileMenu(false); setMegaMenu(null); setSearch(true); return }
       if (event.key === 'Escape') {
         if (search) { setSearch(false); searchButtonRef.current?.focus() }
@@ -64,25 +102,30 @@ export function Layout() {
     return () => removeEventListener('keydown', onKey)
   }, [mobileMenu, search])
 
-  const openSearch = () => { setMobileMenu(false); setMegaMenu(null); setSearch(true) }
-  const closeNavigation = () => { setMegaMenu(null); setMobileMenu(false) }
+  const openSearch = () => { cancelMenuOpen(); cancelMenuClose(); setMobileMenu(false); setMegaMenu(null); setSearch(true) }
+  const closeNavigation = () => { cancelMenuOpen(); cancelMenuClose(); setMegaMenu(null); setMobileMenu(false) }
   const results = tools.filter((tool) => `${tool.name} ${tool.short} ${tool.category}`.toLowerCase().includes(query.toLowerCase())).slice(0, 8)
 
   return <div className="app-shell">
-    <div className="header-shell" ref={headerRef}>
+    <div className="header-shell" ref={headerRef} onPointerDown={() => { keyboardFocus.current = false }} onPointerLeave={closeMenuSoon} onPointerEnter={cancelMenuClose} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) closeMenuSoon() }}>
       <header className="header">
-        <Link className="brand" to="/" aria-label="PDFHope home"><Brand /></Link>
+        <Link className="brand" to="/" aria-label="PDFHope home" onPointerEnter={closeMenuSoon}><Brand /></Link>
         <nav className="desktop-navigation" aria-label="Primary">
-          <NavLink to="/tools">All Tools</NavLink>
-          {navigationGroups.map((group) => <button key={group.id} type="button" aria-expanded={megaMenu === group.id} aria-controls="desktop-mega-menu" onClick={() => setMegaMenu((open) => open === group.id ? null : group.id)}>{group.id === 'advanced' ? 'More' : group.label}</button>)}
+          <NavLink to="/tools" aria-haspopup="true" aria-expanded={megaMenu === 'all'} aria-controls="desktop-mega-menu" onPointerEnter={(event) => { if (event.pointerType !== 'touch') showMenuSoon('all') }} onFocus={() => { if (keyboardFocus.current) showMenu('all') }}>All Tools</NavLink>
+          {navigationGroups.map((group) => <button key={group.id} type="button" aria-haspopup="true" aria-expanded={megaMenu === group.id} aria-controls="desktop-mega-menu" onPointerEnter={(event) => { if (event.pointerType !== 'touch') showMenuSoon(group.id) }} onFocus={() => { if (keyboardFocus.current) showMenu(group.id) }} onClick={() => {
+            const justOpenedByHover = megaMenu === group.id && Date.now() - lastHoverOpen.current < 250
+            cancelMenuOpen()
+            cancelMenuClose()
+            setMegaMenu((open) => justOpenedByHover ? group.id : open === group.id ? null : group.id)
+          }}>{group.label}</button>)}
         </nav>
-        <div className="header-actions">
+        <div className="header-actions" onPointerEnter={closeMenuSoon}>
           <button ref={searchButtonRef} className="icon-button" onClick={openSearch} aria-label="Search tools"><Search size={19} /></button>
           <button className="icon-button theme-toggle" onClick={() => setDark(!dark)} aria-label={`Use ${dark ? 'light' : 'dark'} theme`}>{dark ? <Sun size={19} /> : <Moon size={19} />}</button>
           <button ref={menuButtonRef} className="icon-button mobile-menu-toggle" aria-label={mobileMenu ? 'Close navigation' : 'Open navigation'} aria-expanded={mobileMenu} aria-controls="mobile-navigation-dialog" onClick={() => { setSearch(false); setMegaMenu(null); setMobileMenu(!mobileMenu) }}>{mobileMenu ? <X size={19} /> : <Menu size={19} />}</button>
         </div>
       </header>
-      {megaMenu && <MegaMenu activeGroup={megaMenu} onNavigate={closeNavigation} />}
+      {megaMenu && <MegaMenu mode={megaMenu} onNavigate={closeNavigation} />}
     </div>
     <Outlet />
     <footer><div><Link className="brand footer-brand" to="/" aria-label="PDFHope home"><Brand /></Link><p>Every PDF tool you need—built for speed, clarity, and privacy-conscious processing.</p></div><div><strong>Product</strong><Link to="/tools">All tools</Link><Link to="/pdf-health-check">PDF Health Check</Link><Link to="/privacy">Privacy</Link><Link to="/security">Security</Link></div><div><strong>Company</strong><Link to="/about">About</Link><Link to="/contact">Contact</Link><Link to="/accessibility">Accessibility</Link><Link to="/cookie-policy">Cookie policy</Link></div><div><strong>Legal</strong><Link to="/terms">Terms of use</Link><Link to="/privacy-policy">Privacy policy</Link><a href="/sitemap.xml">Sitemap</a><span className="footer-note"><Heart size={14} /> Made for useful PDFs</span></div></footer>
