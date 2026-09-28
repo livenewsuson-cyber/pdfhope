@@ -272,7 +272,7 @@ export function PdfEditor() {
     return <rect x={x} y={y} width={width} height={height} fill="none" stroke={strokeColor} strokeWidth="2" />
   }
 
-  return <main className={`editor-page ${dark ? 'editor-dark' : ''}`}>
+  return <main className={`editor-page ${dark ? 'editor-dark' : ''}${file ? '' : ' tool-page-empty'}`}>
     <section className="editor-head"><div><span className="kicker">PDFHope Editor</span><h1>Edit PDF</h1><p>Edit existing text or add text, images, signatures, drawings, highlights, and shapes locally.</p></div><div><button className="secondary-button" onClick={() => pdfInput.current?.click()}><FilePlus size={17} /> Open PDF</button><input hidden ref={pdfInput} type="file" accept="application/pdf,.pdf" onChange={(event) => event.target.files?.[0] && void load(event.target.files[0])} /><input hidden ref={imageInput} type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => { const chosen = event.target.files?.[0]; if (chosen) void placeImage(chosen, 'image'); event.currentTarget.value = '' }} /><input hidden ref={signatureInput} type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => { const chosen = event.target.files?.[0]; if (chosen) { void placeImage(chosen, 'signature'); setSignatureOpen(false) } event.currentTarget.value = '' }} /></div></section>
     {error && <div className="error-panel"><X size={18} /><p>{error}</p></div>}
     {!file ? <section className="editor-empty" onClick={() => pdfInput.current?.click()}><FileText size={43} /><h2>Drop a PDF to start editing</h2><p>Everything runs in this tab. No uploads, no account wall.</p></section> : <section className="editor-shell">

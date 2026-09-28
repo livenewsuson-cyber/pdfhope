@@ -22,7 +22,7 @@ export function PdfReader(){
   const matches=pages.reduce((sum,p)=>sum+(search?p.text.toLowerCase().split(search.toLowerCase()).length-1:0),0)
   const go=(n:number)=>{const safe=Math.min(Math.max(1,n),pages.length||1);setPage(safe);pageRefs.current[safe]?.scrollIntoView({behavior:'smooth',block:'start'})}
   const onDrop=(e:React.DragEvent)=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f)void load(f)}
-  return <main className="reader-page" onDragOver={e=>e.preventDefault()} onDrop={onDrop}>
+  return <main className={`reader-page${file?'':' tool-page-empty'}`} onDragOver={e=>e.preventDefault()} onDrop={onDrop}>
     <section className="reader-head"><div><span className="kicker">PDFHope Reader</span><h1>PDF Reader</h1><p>Search, inspect, and print documents locally. Nothing is uploaded.</p></div><div className="reader-actions"><button className="secondary-button" onClick={()=>inputRef.current?.click()}><FolderOpen size={17}/> Open PDF</button><input ref={inputRef} hidden type="file" accept="application/pdf,.pdf" onChange={e=>e.target.files?.[0]&&void load(e.target.files[0])}/>{file&&<button className="secondary-button" onClick={()=>downloadBlob(file,file.name)}><Download size={17}/> Download original</button>}</div></section>
     {error&&<div className="error-panel"><X size={19}/><div><strong>Couldn’t open this PDF</strong><p>{error}</p></div></div>}
     {!file?<section className="reader-empty" onClick={()=>inputRef.current?.click()}><FileText size={42}/><h2>Drop a PDF here</h2><p>or choose a file from your device</p><small><ShieldCheck size={14}/> Processed on your device</small></section>:<section className="reader-shell">

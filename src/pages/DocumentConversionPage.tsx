@@ -69,9 +69,9 @@ function DocumentConversionWorkspace({ mode }: { mode: ConversionMode }) {
   const currentStep = status === 'ready' ? 'Ready' : status === 'uploading' ? 'Uploading' : status === 'analyzing' ? 'Analyzing PDF' : status === 'converting' ? (mode === 'word-to-pdf' ? 'Converting Word to PDF' : 'Converting PDF to Word') : status === 'preparing' ? (mode === 'word-to-pdf' ? 'Preparing download' : 'Preparing DOCX') : status === 'complete' ? 'Complete' : ''
 
   return <main className="tool-page conversion-page"><div className="tool-breadcrumb"><Link to="/tools"><ArrowLeft size={16}/> All tools</Link><span>/</span><span>Convert</span></div>
-    <section className="tool-intro"><div><span className="tool-brand-label"><ToolIcon slug={mode} compact/><span className="kicker">Convert</span></span><h1>{info.title}</h1><p>{info.description}</p></div></section>
+    <section className="tool-intro"><div className="tool-intro-copy"><div className="tool-title-row"><ToolIcon slug={mode} compact/><h1>{info.title}</h1></div><p>{info.description}</p></div></section>
     {error && <div className="error-panel" role="alert"><AlertCircle size={20}/><div><strong>We couldn’t continue</strong><p>{error}</p></div></div>}
-    <section className="workspace-card conversion-workspace"><input ref={input} hidden type="file" accept={info.accept} onChange={(event) => void choose(event.target.files?.[0])}/>
+    <section className={`workspace-card conversion-workspace${!file?' workspace-card--empty':''}`}><input ref={input} hidden type="file" accept={info.accept} onChange={(event) => void choose(event.target.files?.[0])}/>
       {!file && <div className={`dropzone conversion-dropzone ${dragging ? 'is-active' : ''}`} onDragOver={(event) => { event.preventDefault(); setDragging(true) }} onDragLeave={() => setDragging(false)} onDrop={(event) => { event.preventDefault(); setDragging(false); void choose(event.dataTransfer.files[0]) }}>
         <span className="drop-icon"><FileUp size={30}/></span><h2>{info.select}</h2><p>{info.drop}</p><button type="button" className="primary-button" onClick={() => input.current?.click()}>{info.select}</button><span className="provider-note"><LockKeyhole size={15}/> Secure server conversion · 20 MB maximum</span>
       </div>}
