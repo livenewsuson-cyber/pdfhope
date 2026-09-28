@@ -228,3 +228,29 @@ footer{max-width:1240px;gap:44px;padding:58px 28px;margin-top:72px}
   .tool-page-empty .reader-head p,.tool-page-empty .editor-head p{font-size:.95rem}
   .tool-page-empty .reader-empty,.tool-page-empty .editor-empty{min-height:270px}
 }
+
+/* Homepage category discovery reuses the existing tool cards and brand tokens. */
+.home-discovery-heading{align-items:flex-end;gap:16px}
+.home-discovery-heading>div{min-width:0}
+.home-discovery-heading h2{margin:7px 0 6px}
+.home-discovery-description{max-width:700px;margin:0;color:var(--muted);font-size:.96rem;line-height:1.5}
+.home-discovery-heading>a{flex:none}
+.home-tool-filters{display:flex;flex-wrap:wrap;gap:8px;max-width:100%;margin:0 0 18px}
+.home-tool-filters button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--text-secondary);font-size:.84rem;font-weight:750;white-space:nowrap;cursor:pointer;transition:border-color 160ms ease,background-color 160ms ease,color 160ms ease}
+.home-tool-filters button:hover{border-color:color-mix(in srgb,var(--accent) 42%,var(--line));color:var(--accent-dark)}
+.home-tool-filters button[aria-pressed="true"]{border-color:color-mix(in srgb,var(--accent) 35%,var(--line));background:var(--soft);color:var(--accent-dark)}
+.home-tool-filters button:focus-visible,.home-show-more:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.home-filter-count{display:grid;place-items:center;min-width:21px;height:21px;padding:0 5px;border-radius:999px;background:color-mix(in srgb,var(--accent) 9%,var(--surface));color:inherit;font-size:.72rem;font-weight:800}
+.tools-section .tool-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.home-show-more{display:flex;align-items:center;justify-content:center;min-height:44px;margin:20px auto 0;padding:0 20px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--accent-dark);font-weight:800;cursor:pointer}
+.home-show-more:hover{border-color:var(--accent);background:var(--soft)}
+@media(max-width:1100px){.tools-section .tool-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){
+  .tools-section .section-heading>a{display:inline-flex}
+  .home-discovery-heading{align-items:flex-start;gap:8px;margin-bottom:16px}
+  .home-discovery-heading>a{margin-top:3px;font-size:.88rem}
+  .home-discovery-description{font-size:.9rem}
+  .home-tool-filters{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;-webkit-overflow-scrolling:touch;padding:0 0 6px;margin-bottom:14px}
+  .home-tool-filters button{flex:none;padding:0 13px}
+  .tools-section .tool-grid{grid-template-columns:minmax(0,1fr)}
+}

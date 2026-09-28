@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getTool, tools } from '../data/tools'
 import { intelligenceTools } from '../data/navigation'
-import { ToolCard } from '../components/ToolCard'
+import { HomeToolDiscovery } from '../components/HomeToolDiscovery'
 import { ToolIcon } from '../components/ToolIcon'
 import { useSeo } from '../hooks/useSeo'
 
@@ -29,7 +29,7 @@ export function HomePage() {
       <div className="trust-row"><span><ShieldCheck size={16} /> No signup for core tools</span><span><LockKeyhole size={16} /> Local processing where supported</span><span><Smartphone size={16} /> Works on mobile</span></div>
     </section>
 
-    <section className="tools-section"><div className="section-heading"><div><span className="kicker">Start here</span><h2>Popular tools</h2></div><Link to="/tools">Browse all tools <ArrowRight size={16} /></Link></div><div className="tool-grid">{tools.filter((tool) => tool.popular).slice(0, 10).map((tool) => <ToolCard key={tool.slug} tool={tool} />)}</div></section>
+    <HomeToolDiscovery />
 
     {recent.length > 0 && <section className="recent-section"><div className="section-heading"><div><span className="kicker">Stored only in this browser</span><h2>Recently used</h2></div></div><div className="recent-row">{recent.map((tool) => <Link key={tool!.slug} to={`/${tool!.slug}`}><Clock3 size={18} /><span><strong>{tool!.name}</strong><small>{tool!.category}</small></span></Link>)}</div></section>}
 
