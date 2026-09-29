@@ -48,7 +48,7 @@ describe('shared tool cards', () => {
     for (const group of navigationGroups) {
       for (const tool of group.tools) expect(getToolPresentationGroup(tool.slug)).toBe(group.label)
     }
-    expect(getToolPresentationGroup('pdf-metadata-cleaner')).toBe('Advanced')
+    expect(getToolPresentationGroup('pdf-metadata-cleaner')).toBe('Security')
     expect(getToolPresentationGroup('duplicate-page-finder')).toBe('PDF Intelligence')
   })
 })

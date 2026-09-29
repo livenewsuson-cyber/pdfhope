@@ -2,7 +2,7 @@ import { getTool } from './tools'
 import type { ToolDefinition } from '../types/tools'
 
 export type NavigationGroup = {
-  id: 'convert' | 'organize' | 'optimize' | 'edit' | 'intelligence' | 'advanced'
+  id: 'convert' | 'organize' | 'optimize' | 'edit' | 'security' | 'intelligence' | 'advanced'
   label: string
   description: string
   tools: ToolDefinition[]
@@ -40,6 +40,12 @@ export const navigationGroups: NavigationGroup[] = [
     tools: toolList(['edit-pdf', 'add-page-numbers', 'watermark-pdf']),
   },
   {
+    id: 'security',
+    label: 'Security',
+    description: 'Protect, unlock, sign and prepare PDFs for safer sharing.',
+    tools: toolList(['protect-pdf', 'unlock-pdf', 'sign-pdf', 'pdf-metadata-cleaner']),
+  },
+  {
     id: 'intelligence',
     label: 'PDF Intelligence',
     description: 'Read, inspect and understand document structure.',
@@ -48,8 +54,8 @@ export const navigationGroups: NavigationGroup[] = [
   {
     id: 'advanced',
     label: 'Advanced',
-    description: 'Specialist workflows for scans, print and privacy.',
-    tools: toolList(['interleave-pdf', 'deinterleave-pdf', 'n-up-pdf', 'pdf-contact-sheet', 'pdf-metadata-cleaner']),
+    description: 'Specialist workflows for scans and print.',
+    tools: toolList(['interleave-pdf', 'deinterleave-pdf', 'n-up-pdf', 'pdf-contact-sheet']),
   },
 ]
 

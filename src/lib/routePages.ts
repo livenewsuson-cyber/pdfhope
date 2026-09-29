@@ -17,10 +17,12 @@ export const routePages = {
   PdfReader: deferredPage(() => import('../pages/PdfReader').then(module => ({ default: module.PdfReader }))),
   PdfEditor: deferredPage(() => import('../pages/PdfEditor').then(module => ({ default: module.PdfEditor }))),
   DocumentConversionPage: deferredPage(() => import('../pages/DocumentConversionPage').then(module => ({ default: module.DocumentConversionPage }))),
+  SecurityToolPage: deferredPage(() => import('../pages/SecurityToolPage').then(module => ({ default: module.SecurityToolPage }))),
+  SignPdfPage: deferredPage(() => import('../pages/SignPdfPage').then(module => ({ default: module.SignPdfPage }))),
   NotFound: deferredPage(() => import('../pages/InfoPage').then(module => ({ default: module.NotFound }))),
 }
 
 export function preloadInitialPage(path: string) {
-  const page = path === '/' ? 'HomePage' : path === '/tools' ? 'ToolsPage' : path === '/pdf-reader' ? 'PdfReader' : path === '/edit-pdf' ? 'PdfEditor' : ['/word-to-pdf', '/pdf-to-word'].includes(path) ? 'DocumentConversionPage' : ['/about', '/contact', '/privacy', '/privacy-policy', '/terms', '/cookie-policy', '/security', '/accessibility'].includes(path) ? 'InfoPage' : path === '/404' ? 'NotFound' : 'ToolPage'
+  const page = path === '/' ? 'HomePage' : path === '/tools' ? 'ToolsPage' : path === '/pdf-reader' ? 'PdfReader' : path === '/edit-pdf' ? 'PdfEditor' : ['/protect-pdf', '/unlock-pdf'].includes(path) ? 'SecurityToolPage' : path === '/sign-pdf' ? 'SignPdfPage' : ['/word-to-pdf', '/pdf-to-word'].includes(path) ? 'DocumentConversionPage' : ['/about', '/contact', '/privacy', '/privacy-policy', '/terms', '/cookie-policy', '/security', '/accessibility'].includes(path) ? 'InfoPage' : path === '/404' ? 'NotFound' : 'ToolPage'
   return routePages[page].preload()
 }

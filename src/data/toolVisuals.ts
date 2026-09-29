@@ -1,4 +1,4 @@
-import { BookOpen, FilePenLine, Combine, Scissors, FileOutput, FileMinus2, ListOrdered, RotateCw, ImagePlus, Images, FileImage, FileType2, FileInput, ChartNoAxesColumn, Hash, Stamp, ShieldCheck, ScanSearch, FileSearch, Ruler, ScanLine, Copy, Shuffle, Ungroup, PanelsTopLeft, LayoutGrid, Minimize2, type LucideIcon } from 'lucide-react'
+import { BookOpen, FilePenLine, Combine, Scissors, FileOutput, FileMinus2, ListOrdered, RotateCw, ImagePlus, Images, FileImage, FileType2, FileInput, ChartNoAxesColumn, Hash, Stamp, ShieldCheck, LockKeyhole, LockOpen, PenLine, ScanSearch, FileSearch, Ruler, ScanLine, Copy, Shuffle, Ungroup, PanelsTopLeft, LayoutGrid, Minimize2, type LucideIcon } from 'lucide-react'
 
 type Accent = 'blue' | 'red' | 'purple' | 'teal' | 'orange' | 'pink' | 'green'
 export const icons: Record<string, [LucideIcon, Accent]> = {
@@ -13,6 +13,7 @@ export const icons: Record<string, [LucideIcon, Accent]> = {
   'compress-pdf': [Minimize2, 'green'],
   'pdf-size-breakdown': [ChartNoAxesColumn, 'green'], 'add-page-numbers': [Hash, 'blue'],
   'watermark-pdf': [Stamp, 'pink'], 'pdf-metadata-cleaner': [ShieldCheck, 'green'],
+  'protect-pdf': [LockKeyhole, 'green'], 'unlock-pdf': [LockOpen, 'teal'], 'sign-pdf': [PenLine, 'blue'],
   'pdf-health-check': [ScanSearch, 'blue'], 'blank-page-detector': [FileSearch, 'blue'],
   'page-size-analyzer': [Ruler, 'teal'], 'orientation-analyzer': [ScanLine, 'teal'],
   'duplicate-page-finder': [Copy, 'purple'], 'interleave-pdf': [Shuffle, 'purple'],

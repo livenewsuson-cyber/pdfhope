@@ -10,6 +10,7 @@ const groupHeadings: Record<NavigationGroup['id'], string> = {
   organize: 'Organize PDF pages',
   optimize: 'Optimize PDF files',
   edit: 'Edit and enhance PDFs',
+  security: 'Secure and sign PDF files',
   intelligence: 'Understand your PDF',
   advanced: 'Advanced PDF workflows',
 }
