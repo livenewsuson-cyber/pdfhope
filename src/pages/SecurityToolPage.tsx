@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { SeoBreadcrumbs } from '../components/SeoBreadcrumbs'
 import { Check, Download, Eye, EyeOff, RotateCcw } from 'lucide-react'
 import { FileDropzone } from '../components/FileDropzone'
 import { ToolSeoContent } from '../components/ToolSeoContent'
 import { ToolIcon } from '../components/ToolIcon'
 import { getTool } from '../data/tools'
 import { toolSeo } from '../data/toolSeo'
+import { toolH1 } from '../data/toolHeadings'
 import { downloadBlob, safeBaseName, validateFiles } from '../lib/files'
 import { isPasswordProtected, passwordStrength, protectPdf, securityError, unlockPdf, validateProtectionPassword } from '../lib/pdf/security'
 import { useSeo } from '../hooks/useSeo'
@@ -47,8 +48,8 @@ export function SecurityToolPage({ mode }: { mode: 'protect-pdf' | 'unlock-pdf' 
     finally { setBusy(false) }
   }
   const filename = `${safeBaseName(file?.name || 'document')}-${protecting ? 'protected' : 'unlocked'}.pdf`
-  return <main className="tool-page security-page"><div className="tool-breadcrumb"><Link to="/tools">All tools</Link><span>/</span><span>Secure</span></div>
-    <section className="tool-intro"><div className="tool-intro-copy"><div className="tool-title-row"><ToolIcon slug={slug} compact/><h1>{tool.name}</h1></div><p>{tool.description}</p></div></section>
+  return <main className="tool-page security-page"><SeoBreadcrumbs path={`/${slug}`}/>
+    <section className="tool-intro"><div className="tool-intro-copy"><div className="tool-title-row"><ToolIcon slug={slug} compact/><h1>{toolH1(slug, tool.name)}</h1></div><p>{tool.description}</p></div></section>
     {error && <div className="error-panel" role="alert"><div><strong>We couldn’t continue</strong><p>{error}</p></div></div>}
     <section className="workspace-card">
       {!file && <FileDropzone accept={tool.accepts} onFiles={(files) => { void accept(files) }}/>}

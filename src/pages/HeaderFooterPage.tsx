@@ -1,6 +1,6 @@
-import { AlertCircle, ArrowLeft, Check, Download, LockKeyhole, RotateCcw } from 'lucide-react'
+import { AlertCircle, Check, Download, LockKeyhole, RotateCcw } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { SeoBreadcrumbs } from '../components/SeoBreadcrumbs'
 import { FileDropzone } from '../components/FileDropzone'
 import { ToolIcon } from '../components/ToolIcon'
 import { ToolSeoContent } from '../components/ToolSeoContent'
@@ -59,8 +59,8 @@ export function HeaderFooterPage() {
   }
   const previewText = (template: string) => resolveHeaderFooterText(template, preview?.number ?? 1, pages, new Date())
   const previewStyle = { color: options.color, fontSize: `${Math.max(9, options.size * .8)}px`, fontFamily: options.font === 'Times Roman' ? 'Georgia, serif' : options.font === 'Courier' ? 'monospace' : 'Arial, sans-serif', fontWeight: options.style === 'bold' ? 700 : 400, fontStyle: options.style === 'italic' ? 'italic' : 'normal' }
-  return <main className="tool-page header-footer-page"><div className="tool-breadcrumb"><Link to="/tools"><ArrowLeft size={16}/> All tools</Link><span>/</span><span>Edit</span></div>
-    <section className="tool-intro"><div className="tool-intro-copy"><div className="tool-title-row"><ToolIcon slug="header-footer-pdf" compact/><h1>Header &amp; Footer</h1></div><p>Add repeated text, dates, or page numbers to selected PDF pages locally in your browser.</p></div></section>
+  return <main className="tool-page header-footer-page"><SeoBreadcrumbs path="/header-footer-pdf"/>
+    <section className="tool-intro"><div className="tool-intro-copy"><div className="tool-title-row"><ToolIcon slug="header-footer-pdf" compact/><h1>Add Header &amp; Footer to PDF</h1></div><p>Add repeated text, dates, or page numbers to selected PDF pages locally in your browser.</p></div></section>
     {error && <div className="error-panel" role="alert"><AlertCircle size={20}/><div><strong>We couldn’t continue</strong><p>{error}</p></div></div>}
     <section className={`workspace-card${!file ? ' workspace-card--empty' : ''}`}>
       <input ref={input} hidden type="file" accept="application/pdf,.pdf" onChange={event => void choose(event.target.files?.[0])}/>

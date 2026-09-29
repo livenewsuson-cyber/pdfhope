@@ -4,6 +4,7 @@ import { Check, Download, RotateCcw } from 'lucide-react'
 import { FileDropzone } from '../components/FileDropzone'
 import { ToolIcon } from '../components/ToolIcon'
 import { ToolSeoContent } from '../components/ToolSeoContent'
+import { SeoBreadcrumbs } from '../components/SeoBreadcrumbs'
 import { getTool } from '../data/tools'
 import { toolSeo } from '../data/toolSeo'
 import { downloadBlob, formatBytes, safeBaseName, validateFiles } from '../lib/files'
@@ -84,7 +85,7 @@ export function OcrPdfPage() {
   const cancel = () => { if (controller.current) { setPhase('canceling'); controller.current.abort() } }
   const name = safeBaseName(file?.name ?? 'document')
 
-  return <main className="tool-page ocr-page"><div className="tool-breadcrumb"><Link to="/tools">All tools</Link><span>/</span><span>PDF Intelligence</span></div>
+  return <main className="tool-page ocr-page"><SeoBreadcrumbs path="/ocr-pdf"/>
     <section className="tool-intro"><div className="tool-intro-copy"><div className="tool-title-row"><ToolIcon slug={slug} compact/><h1>OCR PDF</h1></div><p>{tool.description}</p></div></section>
     {error && <div className="error-panel" role="alert"><div><strong>We couldn’t continue</strong><p>{error}</p>{/password-protected/i.test(error) && <Link to="/unlock-pdf">Unlock PDF</Link>}</div></div>}
     <section className="workspace-card">

@@ -41,7 +41,7 @@ export function MegaMenu({ mode, anchorElement, onNavigate }: { mode: MegaMenuMo
     <div className="mega-menu-groups">
       {groups.map((group) => <section className="mega-menu-group" key={group.id} aria-labelledby={`mega-${group.id}`}>
         <div className="mega-menu-heading">
-          <h2 id={`mega-${group.id}`}>{group.label}</h2>
+          <h2 id={`mega-${group.id}`}><Link to={group.href} onClick={onNavigate}>{group.label} tools <ArrowRight size={13} aria-hidden="true" /></Link></h2>
           <p>{group.description}</p>
         </div>
         <div className="mega-menu-links">

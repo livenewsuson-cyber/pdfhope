@@ -6,6 +6,7 @@ import { intelligenceTools } from '../data/navigation'
 import { HomeToolDiscovery } from '../components/HomeToolDiscovery'
 import { ToolIcon } from '../components/ToolIcon'
 import { useSeo } from '../hooks/useSeo'
+import { categoryHubs } from '../data/categoryHubs'
 
 export function HomePage() {
   useSeo('Every PDF tool you need', 'Fast PDF tools to convert, organize, edit and inspect documents, with local processing where supported and secure server conversion when needed.', '/')
@@ -30,6 +31,8 @@ export function HomePage() {
     </section>
 
     <HomeToolDiscovery />
+
+    <section className="home-category-links"><div className="section-heading"><div><span className="kicker">Explore by task</span><h2>Explore PDF tools by task</h2></div><Link to="/tools">All PDF tools <ArrowRight size={16} aria-hidden="true" /></Link></div><div>{categoryHubs.map((hub) => <Link key={hub.path} to={hub.path}>{hub.label}<ArrowRight size={15} aria-hidden="true" /></Link>)}</div></section>
 
     {recent.length > 0 && <section className="recent-section"><div className="section-heading"><div><span className="kicker">Stored only in this browser</span><h2>Recently used</h2></div></div><div className="recent-row">{recent.map((tool) => <Link key={tool!.slug} to={`/${tool!.slug}`}><Clock3 size={18} /><span><strong>{tool!.name}</strong><small>{tool!.category}</small></span></Link>)}</div></section>}
 

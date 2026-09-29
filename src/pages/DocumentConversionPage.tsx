@@ -1,6 +1,6 @@
-import { AlertCircle, ArrowLeft, Check, Download, FileUp, LockKeyhole, RotateCcw, ShieldCheck, Trash2 } from 'lucide-react'
+import { AlertCircle, Check, Download, FileUp, LockKeyhole, RotateCcw, ShieldCheck, Trash2 } from 'lucide-react'
 import { useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { SeoBreadcrumbs } from '../components/SeoBreadcrumbs'
 import { convertDocument, type ConversionMode, outputName, validateConversionFile } from '../lib/conversion'
 import { downloadBlob, formatBytes } from '../lib/files'
 import { ToolIcon } from '../components/ToolIcon'
@@ -100,7 +100,7 @@ function DocumentConversionWorkspace({ mode }: { mode: ConversionMode }) {
   }
   const currentStep = status === 'ready' ? 'Ready' : status === 'analyzing' ? info.steps.analyzing ?? 'Analyzing PDF' : status === 'empty' ? '' : info.steps[status]
 
-  return <main className="tool-page conversion-page"><div className="tool-breadcrumb"><Link to="/tools"><ArrowLeft size={16}/> All tools</Link><span>/</span><span>Convert</span></div>
+  return <main className="tool-page conversion-page"><SeoBreadcrumbs path={`/${mode}`}/>
     <section className="tool-intro"><div className="tool-intro-copy"><div className="tool-title-row"><ToolIcon slug={mode} compact/><h1>{info.title}</h1></div><p>{info.description}</p></div></section>
     {error && <div className="error-panel" role="alert"><AlertCircle size={20}/><div><strong>We couldn’t continue</strong><p>{error}</p></div></div>}
     <section className={`workspace-card conversion-workspace${!file?' workspace-card--empty':''}`}><input ref={input} hidden type="file" accept={info.accept} onChange={(event) => void choose(event.target.files?.[0])}/>

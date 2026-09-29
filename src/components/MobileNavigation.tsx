@@ -16,6 +16,7 @@ export function MobileNavigation({ onNavigate }: { onNavigate: () => void }) {
             <span>{group.label}<small>{group.description}</small></span><ChevronDown size={18} aria-hidden="true" />
           </button>
           <div id={`mobile-${group.id}`} className="mobile-nav-links" hidden={!expanded}>
+            <Link className="mobile-category-link" to={group.href} onClick={onNavigate}>Explore {group.label} tools</Link>
             {group.tools.map((tool) => <Link to={`/${tool.slug}`} key={tool.slug} onClick={onNavigate}><ToolIcon slug={tool.slug} compact /><span>{tool.name}</span></Link>)}
           </div>
         </section>

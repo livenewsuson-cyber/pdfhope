@@ -1,6 +1,6 @@
-import { AlertCircle, ArrowLeft, Check, ChevronDown, ChevronUp, Download, Heart, LockKeyhole, RotateCcw, Trash2 } from 'lucide-react'
+import { AlertCircle, Check, ChevronDown, ChevronUp, Download, Heart, LockKeyhole, RotateCcw, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { Link, Navigate, useParams } from 'react-router-dom'
+import { Navigate, useParams } from 'react-router-dom'
 import { zipSync } from 'fflate'
 import { FileDropzone } from '../components/FileDropzone'
 import { ToolIcon } from '../components/ToolIcon'
@@ -12,6 +12,8 @@ import { renderPdfPages, visualAnalysis } from '../lib/pdf/render'
 import { useSeo } from '../hooks/useSeo'
 import { toolSeo } from '../data/toolSeo'
 import { ToolSeoContent } from '../components/ToolSeoContent'
+import { SeoBreadcrumbs } from '../components/SeoBreadcrumbs'
+import { toolH1 } from '../data/toolHeadings'
 import { compressPdf, detectLikelyScanHeavy, DEFAULT_COMPRESSION_PRESET, type CompressionPreset, type CompressionProgress, type CompressionResult } from '../lib/pdf/compress'
 import { validateTargetBytes } from '../lib/pdf/compressionCandidates'
 
@@ -62,7 +64,7 @@ function ToolWorkspace({tool}:{tool:NonNullable<ReturnType<typeof getTool>>}) {
     }
     setProgress(100);setResult(output);setResultName(`${safeBaseName(files[0]?.name||'document')}-${name}`);setPhase('done')
   }catch(cause){setError(cause instanceof Error?friendlyError(cause):'Processing failed.');setPhase('configure')}}
-  return <main className="tool-page"><div className="tool-breadcrumb"><Link to="/tools"><ArrowLeft size={16}/> All tools</Link><span>/</span><span>{tool.category}</span></div><section className="tool-intro"><div className="tool-intro-copy"><div className="tool-title-row"><ToolIcon slug={tool.slug} compact/><h1>{tool.name}</h1></div><p>{tool.description}</p></div><button className={`favorite-button ${favorite?'active':''}`} onClick={updateFavorite} aria-label={favorite?'Remove from favorites':'Add to favorites'}><Heart size={18} fill={favorite?'currentColor':'none'}/>{favorite?'Saved':'Save tool'}</button></section>
+  return <main className="tool-page"><SeoBreadcrumbs path={`/${tool.slug}`}/><section className="tool-intro"><div className="tool-intro-copy"><div className="tool-title-row"><ToolIcon slug={tool.slug} compact/><h1>{toolH1(tool.slug, tool.name)}</h1></div><p>{tool.description}</p></div><button className={`favorite-button ${favorite?'active':''}`} onClick={updateFavorite} aria-label={favorite?'Remove from favorites':'Add to favorites'}><Heart size={18} fill={favorite?'currentColor':'none'}/>{favorite?'Saved':'Save tool'}</button></section>
     {phase!=='upload'&&<ol className="stepper" aria-label="Progress"><li className="complete"><span>1</span>Upload</li><li className={phase==='configure'?'active':phase==='processing'||phase==='done'?'complete':''}><span>2</span>Configure</li><li className={phase==='processing'||phase==='done'?'active':''}><span>3</span>Process & download</li></ol>}
     {error&&<div className="error-panel" role="alert"><AlertCircle size={20}/><div><strong>We couldn’t continue</strong><p>{error}</p></div></div>}
     <section className={`workspace-card${phase==='upload'?' workspace-card--empty':''}`}>
