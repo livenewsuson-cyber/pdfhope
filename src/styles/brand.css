@@ -113,8 +113,8 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 .desktop-navigation a:hover,.desktop-navigation button:hover,.desktop-navigation a.active,.desktop-navigation button[aria-expanded="true"]{color:var(--accent-dark);background:var(--soft)}
 .icon-button{width:40px;height:40px;border-radius:12px;transition:background-color 160ms ease,border-color 160ms ease,transform 160ms ease}
 .icon-button:hover{border-color:color-mix(in srgb,var(--accent) 35%,var(--line));background:var(--soft)}
-.mega-menu{position:absolute;top:100%;left:50%;box-sizing:border-box;min-width:0;max-width:calc(100vw - 32px);max-height:calc(100vh - 82px);overflow-x:hidden;overflow-y:auto;transform:translateX(-50%);padding:22px;border:1px solid var(--line);border-radius:0 0 22px 22px;background:var(--surface-raised);box-shadow:0 28px 80px rgb(15 27 49 / 18%)}
-.mega-menu--all{width:min(1240px,calc(100vw - 32px))}
+.mega-menu{position:absolute;top:100%;box-sizing:border-box;min-width:0;max-width:calc(100vw - 32px);max-height:calc(100vh - 82px);overflow-x:hidden;overflow-y:auto;transform:translateX(-50%);padding:22px;border:1px solid var(--line);border-radius:0 0 22px 22px;background:var(--surface-raised);box-shadow:0 28px 80px rgb(15 27 49 / 18%)}
+.mega-menu--all{left:50%;width:min(1240px,calc(100vw - 32px))}
 .mega-menu--category{width:min(740px,calc(100vw - 32px))}
 .mega-menu--category[data-mode="edit"]{width:min(420px,calc(100vw - 32px))}
 .mega-menu--category[data-mode="advanced"]{width:min(650px,calc(100vw - 32px))}

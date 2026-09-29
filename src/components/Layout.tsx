@@ -17,6 +17,7 @@ export function Layout() {
   const [dark, setDark] = useState(() => localStorage.getItem('pdfhope-theme') === 'dark' || (!localStorage.getItem('pdfhope-theme') && matchMedia('(prefers-color-scheme: dark)').matches))
   const [mobileMenu, setMobileMenu] = useState(false)
   const [megaMenu, setMegaMenu] = useState<MegaMenuMode | null>(null)
+  const [megaMenuAnchor, setMegaMenuAnchor] = useState<HTMLElement | null>(null)
   const [search, setSearch] = useState(false)
   const [query, setQuery] = useState('')
   const headerRef = useRef<HTMLDivElement>(null)
@@ -42,16 +43,18 @@ export function Layout() {
     cancelMenuClose()
     menuCloseTimer.current = setTimeout(() => setMegaMenu(null), 150)
   }
-  const showMenu = (mode: MegaMenuMode) => {
+  const showMenu = (mode: MegaMenuMode, anchor: HTMLElement | null) => {
     cancelMenuOpen()
     cancelMenuClose()
+    setMegaMenuAnchor(anchor)
     setMegaMenu(mode)
   }
-  const showMenuSoon = (mode: MegaMenuMode) => {
+  const showMenuSoon = (mode: MegaMenuMode, anchor: HTMLElement | null) => {
     cancelMenuOpen()
     cancelMenuClose()
     menuOpenTimer.current = setTimeout(() => {
       lastHoverOpen.current = Date.now()
+      setMegaMenuAnchor(anchor)
       setMegaMenu(mode)
       menuOpenTimer.current = null
     }, 75)
@@ -111,11 +114,12 @@ export function Layout() {
       <header className="header">
         <Link className="brand" to="/" aria-label="PDFHope home" onPointerEnter={closeMenuSoon}><Brand /></Link>
         <nav className="desktop-navigation" aria-label="Primary">
-          <NavLink to="/tools" aria-haspopup="true" aria-expanded={megaMenu === 'all'} aria-controls="desktop-mega-menu" onPointerEnter={(event) => { if (event.pointerType !== 'touch') showMenuSoon('all') }} onFocus={() => { if (keyboardFocus.current) showMenu('all') }}>All Tools<ChevronDown size={14} aria-hidden="true" /></NavLink>
-          {navigationGroups.map((group) => <button key={group.id} type="button" aria-haspopup="true" aria-expanded={megaMenu === group.id} aria-controls="desktop-mega-menu" onPointerEnter={(event) => { if (event.pointerType !== 'touch') showMenuSoon(group.id) }} onFocus={() => { if (keyboardFocus.current) showMenu(group.id) }} onClick={() => {
+          <NavLink to="/tools" aria-haspopup="true" aria-expanded={megaMenu === 'all'} aria-controls="desktop-mega-menu" onPointerEnter={(event) => { if (event.pointerType !== 'touch') showMenuSoon('all', event.currentTarget) }} onFocus={(event) => { if (keyboardFocus.current) showMenu('all', event.currentTarget) }}>All Tools<ChevronDown size={14} aria-hidden="true" /></NavLink>
+          {navigationGroups.map((group) => <button key={group.id} type="button" aria-haspopup="true" aria-expanded={megaMenu === group.id} aria-controls="desktop-mega-menu" onPointerEnter={(event) => { if (event.pointerType !== 'touch') showMenuSoon(group.id, event.currentTarget) }} onFocus={(event) => { if (keyboardFocus.current) showMenu(group.id, event.currentTarget) }} onClick={(event) => {
             const justOpenedByHover = megaMenu === group.id && Date.now() - lastHoverOpen.current < 250
             cancelMenuOpen()
             cancelMenuClose()
+            setMegaMenuAnchor(event.currentTarget)
             setMegaMenu((open) => justOpenedByHover ? group.id : open === group.id ? null : group.id)
           }}>{group.label}<ChevronDown size={14} aria-hidden="true" /></button>)}
         </nav>
@@ -125,7 +129,7 @@ export function Layout() {
           <button ref={menuButtonRef} className="icon-button mobile-menu-toggle" aria-label={mobileMenu ? 'Close navigation' : 'Open navigation'} aria-expanded={mobileMenu} aria-controls="mobile-navigation-dialog" onClick={() => { setSearch(false); setMegaMenu(null); setMobileMenu(!mobileMenu) }}>{mobileMenu ? <X size={19} /> : <Menu size={19} />}</button>
         </div>
       </header>
-      {megaMenu && <MegaMenu mode={megaMenu} onNavigate={closeNavigation} />}
+      {megaMenu && <MegaMenu mode={megaMenu} anchorElement={megaMenuAnchor} onNavigate={closeNavigation} />}
     </div>
     <Outlet />
     <footer><div><Link className="brand footer-brand" to="/" aria-label="PDFHope home"><Brand /></Link><p>Every PDF tool you need—built for speed, clarity, and privacy-conscious processing.</p></div><div><strong>Product</strong><Link to="/tools">All tools</Link><Link to="/pdf-health-check">PDF Health Check</Link><Link to="/privacy">Privacy</Link><Link to="/security">Security</Link></div><div><strong>Company</strong><Link to="/about">About</Link><Link to="/contact">Contact</Link><Link to="/accessibility">Accessibility</Link><Link to="/cookie-policy">Cookie policy</Link></div><div><strong>Legal</strong><Link to="/terms">Terms of use</Link><Link to="/privacy-policy">Privacy policy</Link><a href="/sitemap.xml">Sitemap</a><span className="footer-note"><Heart size={14} /> Made for useful PDFs</span></div></footer>
