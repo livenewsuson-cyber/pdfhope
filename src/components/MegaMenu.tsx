@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import { navigationGroups, type NavigationGroup } from '../data/navigation'
+import { megaMenuShort } from '../data/navigationCopy'
 import { ToolIcon } from './ToolIcon'
 
 export type MegaMenuMode = 'all' | NavigationGroup['id']
@@ -12,7 +13,7 @@ export function MegaMenu({ mode, onNavigate }: { mode: MegaMenuMode; onNavigate:
     {mode === 'all' && <div className="mega-menu-intro">
       <span className="kicker">PDFHope toolkit</span>
       <strong>Choose a focused workflow</strong>
-      <p>Fast tools for everyday PDF work, with clear privacy boundaries.</p>
+      <p>Fast PDF tools with clear privacy boundaries.</p>
       <Link to="/tools" onClick={onNavigate}>Explore all tools <ArrowRight size={15} aria-hidden="true" /></Link>
     </div>}
     <div className="mega-menu-groups">
@@ -24,7 +25,7 @@ export function MegaMenu({ mode, onNavigate }: { mode: MegaMenuMode; onNavigate:
         <div className="mega-menu-links">
           {group.tools.map((tool) => <Link to={`/${tool.slug}`} key={tool.slug} onClick={onNavigate}>
             <ToolIcon slug={tool.slug} compact />
-            <span><strong>{tool.name}</strong><small>{tool.short}</small></span>
+            <span><strong>{tool.name}</strong><small>{megaMenuShort[tool.slug] ?? tool.short}</small></span>
           </Link>)}
         </div>
       </section>)}

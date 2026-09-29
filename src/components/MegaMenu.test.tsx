@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 import { navigationGroups } from '../data/navigation'
+import { megaMenuShort } from '../data/navigationCopy'
 import { MegaMenu, type MegaMenuMode } from './MegaMenu'
 
 const renderMenu = (mode: MegaMenuMode) => renderToStaticMarkup(
@@ -14,6 +15,15 @@ describe('desktop mega menu content', () => {
     expect(html.match(/class="mega-menu-group"/g)).toHaveLength(navigationGroups.length)
     expect(html).toContain('Explore all tools')
     for (const group of navigationGroups) expect(html).toContain(`href="/${group.tools[0].slug}"`)
+  })
+
+  it('uses concise menu-only copy for every visible tool', () => {
+    const html = renderMenu('all')
+    for (const tool of navigationGroups.flatMap((group) => group.tools)) {
+      expect(megaMenuShort[tool.slug]).toBeTruthy()
+      expect(html).toContain(megaMenuShort[tool.slug])
+    }
+    expect(megaMenuShort['word-to-pdf']).not.toBe(navigationGroups[0].tools[0].short)
   })
 
   it.each(navigationGroups)('shows only $label tools in its category panel', (group) => {
