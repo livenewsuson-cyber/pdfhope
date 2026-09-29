@@ -33,12 +33,13 @@ describe('shared tool cards', () => {
     expect(html).not.toContain('<button')
   })
 
-  it('labels only Word conversion as secure server conversion', () => {
-    for (const slug of ['word-to-pdf', 'pdf-to-word']) {
+  it('labels all Office conversion as secure server conversion', () => {
+    const serverTools = ['word-to-pdf', 'pdf-to-word', 'excel-to-pdf', 'powerpoint-to-pdf']
+    for (const slug of serverTools) {
       expect(getToolProcessingMode(slug)).toBe('Secure conversion')
       expect(markup(slug, true)).toContain('Secure conversion')
     }
-    for (const tool of tools.filter((item) => item.slug !== 'word-to-pdf' && item.slug !== 'pdf-to-word')) {
+    for (const tool of tools.filter((item) => !serverTools.includes(item.slug))) {
       expect(getToolProcessingMode(tool.slug)).toBe('Local')
       expect(markup(tool.slug, true)).not.toContain('Secure conversion')
     }

@@ -2,6 +2,8 @@
 export const megaMenuShort: Record<string, string> = {
   'word-to-pdf': 'Convert Word to PDF',
   'pdf-to-word': 'Create editable Word files',
+  'excel-to-pdf': 'Convert spreadsheets to PDF',
+  'powerpoint-to-pdf': 'Convert slides to PDF',
   'jpg-to-pdf': 'Turn JPG images into PDF',
   'png-to-pdf': 'Turn PNG images into PDF',
   'webp-to-pdf': 'Turn WebP images into PDF',
@@ -18,6 +20,7 @@ export const megaMenuShort: Record<string, string> = {
   'pdf-size-breakdown': 'Analyze file-size complexity',
   'edit-pdf': 'Edit text, images and annotations',
   'add-page-numbers': 'Add flexible page numbers',
+  'header-footer-pdf': 'Add repeated page text',
   'watermark-pdf': 'Add a text watermark',
   'protect-pdf': 'Password-protect a PDF',
   'unlock-pdf': 'Remove known PDF password',

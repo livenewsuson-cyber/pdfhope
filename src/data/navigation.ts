@@ -19,7 +19,7 @@ export const navigationGroups: NavigationGroup[] = [
     id: 'convert',
     label: 'Convert',
     description: 'PDF, Word and image conversion.',
-    tools: toolList(['word-to-pdf', 'pdf-to-word', 'jpg-to-pdf', 'png-to-pdf', 'webp-to-pdf', 'images-to-pdf', 'pdf-to-jpg', 'pdf-to-png']),
+    tools: toolList(['word-to-pdf', 'pdf-to-word', 'excel-to-pdf', 'powerpoint-to-pdf', 'jpg-to-pdf', 'png-to-pdf', 'webp-to-pdf', 'images-to-pdf', 'pdf-to-jpg', 'pdf-to-png']),
   },
   {
     id: 'organize',
@@ -37,7 +37,7 @@ export const navigationGroups: NavigationGroup[] = [
     id: 'edit',
     label: 'Edit',
     description: 'Edit and enhance PDFs.',
-    tools: toolList(['edit-pdf', 'add-page-numbers', 'watermark-pdf']),
+    tools: toolList(['edit-pdf', 'add-page-numbers', 'header-footer-pdf', 'watermark-pdf']),
   },
   {
     id: 'security',

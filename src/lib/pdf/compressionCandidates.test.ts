@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { candidatePageCountMatches, chooseCompressionCandidate, type CompressionCandidate } from './compressionCandidates'
+import { candidatePageCountMatches, chooseCompressionCandidate, chooseTargetCompressionCandidate, validateTargetBytes, type CompressionCandidate } from './compressionCandidates'
 
 const candidate = (size: number, method: CompressionCandidate['methods'][number], text: CompressionCandidate['textPreservation'] = 'preserved'): CompressionCandidate => ({
   bytes: new Uint8Array(size), methods: [method], textPreservation: text, rasterizedPages: [], preservedPages: [1],
@@ -30,5 +30,23 @@ describe('preservation-first compression candidates', () => {
     expect(candidatePageCountMatches(20, 20)).toBe(true)
     expect(candidatePageCountMatches(20, 19)).toBe(false)
     expect(candidatePageCountMatches(0, 0)).toBe(false)
+  })
+  it('chooses the highest-quality valid candidate under a target', () => {
+    const high = { ...candidate(198_000, 'page rasterization', 'flattened'), qualityScore: 80 }
+    const low = { ...candidate(122_000, 'page rasterization', 'flattened'), qualityScore: 40 }
+    const choice = chooseTargetCompressionCandidate(1_200_000, 200_000, [low, high])
+    expect(choice.best).toBe(high)
+    expect(choice.targetReached).toBe(true)
+  })
+  it('returns the smallest valid result when the target is impossible', () => {
+    const choice = chooseTargetCompressionCandidate(500_000, 100_000, [candidate(146_000, 'structural'), candidate(175_000, 'page rasterization', 'flattened')])
+    expect(choice.best?.bytes.length).toBe(146_000)
+    expect(choice.targetReached).toBe(false)
+  })
+  it('does not present enlarged output as compression', () => {
+    expect(chooseTargetCompressionCandidate(125_000, 50_000, [candidate(126_000, 'structural')]).best).toBeNull()
+    expect(validateTargetBytes(125_000, 125_000)).toContain('already at or below')
+    expect(validateTargetBytes(125_000, 5_000)).toContain('at least 5 KB')
+    expect(validateTargetBytes(125_000, 50_000)).toBeNull()
   })
 })

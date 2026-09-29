@@ -1,9 +1,9 @@
 import { PDFDocument } from 'pdf-lib'
 import { OPS, type PDFDocumentProxy } from 'pdfjs-dist'
 import { openRenderedPdf } from './render'
-import { candidatePageCountMatches, chooseCompressionCandidate, type CompressionCandidate, type CompressionMethod, type TextPreservation } from './compressionCandidates'
+import { candidatePageCountMatches, chooseCompressionCandidate, chooseTargetCompressionCandidate, validateTargetBytes, type CompressionCandidate, type CompressionMethod, type TextPreservation } from './compressionCandidates'
 
-export type CompressionPreset = 'recommended' | 'strong' | 'maximum'
+export type CompressionPreset = 'recommended' | 'strong' | 'maximum' | 'target'
 export const DEFAULT_COMPRESSION_PRESET: CompressionPreset = 'recommended'
 export type CompressionProgress = { stage: 'optimizing' | 'analyzing' | 'compressing' | 'validating' | 'finalizing'; page: number; total: number }
 export type CompressionResult = {
@@ -24,6 +24,9 @@ export type CompressionResult = {
   structuralBytes: number | null
   scanCandidateBytes: number | null
   structuralStatus: 'complete' | 'failed' | 'not-used'
+  targetBytes?: number
+  targetReached?: boolean
+  appearsScanHeavy?: boolean | null
 }
 
 const settings = {
@@ -99,11 +102,11 @@ async function hasDocumentFeatures(pdf: PDFDocumentProxy) {
   return false
 }
 
-async function rasterCandidate(file: File, pdf: PDFDocumentProxy, pages: Set<number>, preset: CompressionPreset, onProgress?: (value: CompressionProgress) => void): Promise<CompressionCandidate> {
+async function rasterCandidate(file: File, pdf: PDFDocumentProxy, pages: Set<number>, preset: Exclude<CompressionPreset, 'target'>, onProgress?: (value: CompressionProgress) => void, override?: { dpi: number; quality: number; qualityScore: number }): Promise<CompressionCandidate> {
   const source = pages.size === pdf.numPages ? null : await PDFDocument.load(await file.arrayBuffer(), { ignoreEncryption: false, updateMetadata: false })
   const output = await PDFDocument.create()
   const rasterizedPages: number[] = [], preservedPages: number[] = []
-  const { dpi, quality } = settings[preset]
+  const { dpi, quality } = override ?? settings[preset]
   for (let number = 1; number <= pdf.numPages; number += 1) {
     const page = await pdf.getPage(number)
     try {
@@ -135,20 +138,31 @@ async function rasterCandidate(file: File, pdf: PDFDocumentProxy, pages: Set<num
     await nextFrame()
   }
   const bytes = new Uint8Array(await output.save({ useObjectStreams: true }))
-  return { bytes, methods: [preset === 'recommended' ? 'scanned-page recompression' : 'page rasterization'], textPreservation: preset === 'recommended' ? 'preserved' : 'flattened', rasterizedPages, preservedPages }
+  return { bytes, methods: [preset === 'recommended' ? 'scanned-page recompression' : 'page rasterization'], textPreservation: preset === 'recommended' ? 'preserved' : 'flattened', rasterizedPages, preservedPages, qualityScore: override?.qualityScore }
 }
 
-export async function compressPdf(file: File, { preset, onProgress }: { preset: CompressionPreset; onProgress?: (progress: CompressionProgress) => void }): Promise<CompressionResult> {
+export async function detectLikelyScanHeavy(file: File) {
+  const pdf = await openRenderedPdf(file)
+  try { const { scans } = await likelyScanPages(pdf); return scans.size / pdf.numPages >= .5 }
+  finally { await pdf.cleanup() }
+}
+
+export async function compressPdf(file: File, { preset, targetBytes, allowFlattening = false, onProgress }: { preset: CompressionPreset; targetBytes?: number; allowFlattening?: boolean; onProgress?: (progress: CompressionProgress) => void }): Promise<CompressionResult> {
+  if (preset === 'target') {
+    const issue = validateTargetBytes(file.size, targetBytes ?? NaN)
+    if (issue) throw new Error(issue)
+  }
   const pdf = await openRenderedPdf(file)
   const total = pdf.numPages
   const allPages = Array.from({ length: total }, (_, i) => i + 1)
   const candidates: CompressionCandidate[] = []
   let structuralBytes: number | null = null, scanCandidateBytes: number | null = null
-  let structuralStatus: CompressionResult['structuralStatus'] = preset === 'recommended' ? 'failed' : 'not-used'
+  let structuralStatus: CompressionResult['structuralStatus'] = preset === 'recommended' || preset === 'target' ? 'failed' : 'not-used'
   let structuralError: unknown = null, rasterError: unknown = null
   let hadSearchableText: boolean | null = null
+  let appearsScanHeavy: boolean | null = null
   try {
-    if (preset === 'recommended') {
+    if (preset === 'recommended' || preset === 'target') {
       onProgress?.({ stage: 'optimizing', page: 0, total })
       try {
         const { structuralOptimize } = await import('./structuralOptimize')
@@ -157,27 +171,67 @@ export async function compressPdf(file: File, { preset, onProgress }: { preset: 
         onProgress?.({ stage: 'validating', page: 0, total })
         if (!(await validCandidate(pdf, bytes, true))) throw new Error('The structural output did not pass PDF validation.')
         structuralStatus = 'complete'
-        candidates.push({ bytes, methods: ['structural'], textPreservation: 'preserved', rasterizedPages: [], preservedPages: allPages })
+        candidates.push({ bytes, methods: ['structural'], textPreservation: 'preserved', rasterizedPages: [], preservedPages: allPages, qualityScore: 100 })
       } catch (error) { structuralError = error }
       let scans = new Set<number>(), safeToRebuild = false
-      try {
-        const analysis = await likelyScanPages(pdf, onProgress)
-        scans = analysis.scans
-        hadSearchableText = analysis.hadSearchableText
-        safeToRebuild = scans.size > 0 && !(await hasDocumentFeatures(pdf))
-      } catch (error) {
-        if (!candidates.length) throw error
+      if (preset === 'recommended' || !candidates.some(candidate => candidate.bytes.length <= targetBytes!)) {
+        try {
+          const analysis = await likelyScanPages(pdf, onProgress)
+          scans = analysis.scans
+          hadSearchableText = analysis.hadSearchableText
+          appearsScanHeavy = scans.size / total >= .5
+          safeToRebuild = scans.size > 0 && !(await hasDocumentFeatures(pdf))
+        } catch (error) {
+          if (!candidates.length) throw error
+        }
       }
       if (safeToRebuild) {
         try {
-          const raster = await rasterCandidate(file, pdf, scans, preset, onProgress)
+          const raster = await rasterCandidate(file, pdf, scans, 'recommended', onProgress)
+          raster.qualityScore = 95
           scanCandidateBytes = raster.bytes.length
           onProgress?.({ stage: 'validating', page: 0, total })
           if (!(await validCandidate(pdf, raster.bytes, true))) throw new Error('The scanned-page output did not pass PDF validation.')
           candidates.push(raster)
         } catch (error) { rasterError = error }
       }
-      if (structuralError && rasterError) throw new Error('Both structural and scanned-page compression failed. Try a smaller file or another browser.')
+      if (preset === 'target' && !candidates.some(candidate => candidate.bytes.length <= targetBytes!)) {
+        if (!allowFlattening) throw new Error('Acknowledge that target compression may flatten searchable text and interactive features.')
+        if (hadSearchableText === null) hadSearchableText = await documentHasText(pdf)
+        const profiles = [
+          { dpi: 160, quality: .88 }, { dpi: 145, quality: .8 }, { dpi: 130, quality: .72 },
+          { dpi: 115, quality: .64 }, { dpi: 100, quality: .56 }, { dpi: 84, quality: .48 },
+        ]
+        let lastMiss: typeof profiles[number] | null = null
+        let firstHit: typeof profiles[number] | null = null
+        let firstHitIndex = -1
+        for (const [index, profile] of profiles.entries()) {
+          try {
+            const raster = await rasterCandidate(file, pdf, new Set(allPages), 'maximum', onProgress, { ...profile, qualityScore: 80 - index * 10 })
+            onProgress?.({ stage: 'validating', page: 0, total })
+            if (await validCandidate(pdf, raster.bytes, false)) {
+              candidates.push(raster)
+              if (raster.bytes.length <= targetBytes!) { firstHit = profile; firstHitIndex = index; break }
+            }
+          } catch (error) { rasterError = error }
+          lastMiss = profile
+        }
+        if (firstHit && lastMiss) {
+          for (let index = 0; index < 2; index += 1) {
+            const refined: { dpi: number; quality: number } = { dpi: Math.round((firstHit!.dpi + lastMiss!.dpi) / 2), quality: (firstHit!.quality + lastMiss!.quality) / 2 }
+            try {
+              const raster = await rasterCandidate(file, pdf, new Set(allPages), 'maximum', onProgress, { ...refined, qualityScore: 80 - firstHitIndex * 10 + refined.dpi / 1000 })
+              onProgress?.({ stage: 'validating', page: 0, total })
+              if (await validCandidate(pdf, raster.bytes, false)) {
+                candidates.push(raster)
+                if (raster.bytes.length <= targetBytes!) firstHit = refined
+                else lastMiss = refined
+              }
+            } catch (error) { rasterError = error }
+          }
+        }
+      }
+      if (structuralError && rasterError && !candidates.length) throw new Error('Compression candidates failed. Try a smaller file or another browser.')
     } else {
       hadSearchableText = await documentHasText(pdf)
       const raster = await rasterCandidate(file, pdf, new Set(allPages), preset, onProgress)
@@ -187,7 +241,8 @@ export async function compressPdf(file: File, { preset, onProgress }: { preset: 
       candidates.push(raster)
     }
     onProgress?.({ stage: 'finalizing', page: total, total })
-    const best = chooseCompressionCandidate(file.size, candidates, preset === 'recommended')
+    const targetChoice = preset === 'target' ? chooseTargetCompressionCandidate(file.size, targetBytes!, candidates) : null
+    const best = targetChoice ? targetChoice.best : chooseCompressionCandidate(file.size, candidates, preset === 'recommended')
     const outputBytes = best?.bytes.length ?? (candidates.length ? Math.min(...candidates.map(candidate => candidate.bytes.length)) : file.size)
     return {
       output: best ? new Blob([best.bytes as BlobPart], { type: 'application/pdf' }) : null,
@@ -197,6 +252,7 @@ export async function compressPdf(file: File, { preset, onProgress }: { preset: 
       optimizationMethods: best?.methods ?? [], textPreservation: best?.textPreservation ?? 'preserved',
       hadSearchableText,
       structuralBytes, scanCandidateBytes, structuralStatus,
+      ...(preset === 'target' ? { targetBytes, targetReached: targetChoice!.targetReached, appearsScanHeavy } : {}),
     }
   } finally { await pdf.cleanup() }
 }

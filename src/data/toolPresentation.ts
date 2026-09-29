@@ -11,7 +11,7 @@ export function getToolPresentationGroup(slug: string): string | undefined {
 }
 
 export function getToolProcessingMode(slug: string): ToolProcessingMode {
-  return slug === 'word-to-pdf' || slug === 'pdf-to-word' ? 'Secure conversion' : 'Local'
+  return ['word-to-pdf', 'pdf-to-word', 'excel-to-pdf', 'powerpoint-to-pdf'].includes(slug) ? 'Secure conversion' : 'Local'
 }
 
 export function getToolBadge(tool: ToolDefinition): ToolBadge | null {

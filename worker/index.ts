@@ -11,11 +11,13 @@ interface Env {
   CONVERSION_RATE_LIMITER: RateLimitBinding
 }
 
-type Mode = 'word-to-pdf' | 'pdf-to-word'
+type Mode = 'word-to-pdf' | 'pdf-to-word' | 'excel-to-pdf' | 'powerpoint-to-pdf'
 
 const routes: Record<string, Mode> = {
   '/api/convert/word-to-pdf': 'word-to-pdf',
   '/api/convert/pdf-to-word': 'pdf-to-word',
+  '/api/convert/excel-to-pdf': 'excel-to-pdf',
+  '/api/convert/powerpoint-to-pdf': 'powerpoint-to-pdf',
 }
 
 const jsonError = (status: number, code: string, requestId: string) => Response.json(
@@ -34,8 +36,13 @@ const startsWith = (bytes: Uint8Array, signature: number[]) => signature.every((
 
 export function validMagic(bytes: Uint8Array, extension: string) {
   if (extension === 'pdf') return startsWith(bytes, [0x25, 0x50, 0x44, 0x46, 0x2d])
-  if (extension === 'doc') return startsWith(bytes, [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1])
-  if (extension === 'docx') return startsWith(bytes, [0x50, 0x4b, 0x03, 0x04])
+  if (['doc', 'xls', 'ppt'].includes(extension)) return startsWith(bytes, [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1])
+  if (['docx', 'xlsx', 'pptx'].includes(extension)) {
+    if (!startsWith(bytes, [0x50, 0x4b, 0x03, 0x04])) return false
+    if (extension === 'docx') return true
+    const names = new TextDecoder('latin1').decode(bytes)
+    return names.includes('[Content_Types].xml') && names.includes(extension === 'xlsx' ? 'xl/' : 'ppt/')
+  }
   return false
 }
 
@@ -80,18 +87,26 @@ async function handleConversion(request: Request, env: Env, mode: Mode, requestI
 
   const filename = safeFilename(request.headers.get('X-PDFHope-Filename'))
   const extension = extensionOf(filename)
-  if ((mode === 'pdf-to-word' && extension !== 'pdf') || (mode === 'word-to-pdf' && !['doc', 'docx'].includes(extension))) return jsonError(415, 'invalid_file', requestId)
+  const allowedExtensions: Record<Mode, string[]> = {
+    'pdf-to-word': ['pdf'], 'word-to-pdf': ['doc', 'docx'],
+    'excel-to-pdf': ['xls', 'xlsx'], 'powerpoint-to-pdf': ['ppt', 'pptx'],
+  }
+  if (!allowedExtensions[mode].includes(extension)) return jsonError(415, 'invalid_file', requestId)
 
   const contentType = request.headers.get('Content-Type')?.split(';')[0].trim().toLowerCase() ?? ''
-  const allowedTypes = mode === 'pdf-to-word'
-    ? ['application/pdf', 'application/octet-stream']
-    : ['application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/octet-stream']
-  if (!allowedTypes.includes(contentType)) return jsonError(415, 'invalid_file', requestId)
+  const allowedTypes: Record<Mode, string[]> = {
+    'pdf-to-word': ['application/pdf', 'application/octet-stream'],
+    'word-to-pdf': ['application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/octet-stream'],
+    'excel-to-pdf': ['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/octet-stream'],
+    'powerpoint-to-pdf': ['application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'application/octet-stream'],
+  }
+  if (!allowedTypes[mode].includes(contentType)) return jsonError(415, 'invalid_file', requestId)
 
-  const inspected = await inspectStream(request.body)
+  const inspected = await inspectStream(request.body, extension === 'xlsx' || extension === 'pptx' ? 256 * 1024 : 8)
   if (!validMagic(inspected.prefix, extension)) {
     await inspected.stream.cancel()
-    return jsonError(415, 'invalid_file', requestId)
+    const protectedOoxml = ['docx','xlsx','pptx'].includes(extension) && startsWith(inspected.prefix, [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1])
+    return jsonError(415, protectedOoxml ? 'password_protected' : 'invalid_file', requestId)
   }
 
   const rateKey = request.headers.get('CF-Connecting-IP') ?? 'unknown'
@@ -106,7 +121,7 @@ async function handleConversion(request: Request, env: Env, mode: Mode, requestI
   }
 
   const source = extension
-  const target = mode === 'word-to-pdf' ? 'pdf' : 'docx'
+  const target = mode === 'pdf-to-word' ? 'docx' : 'pdf'
   const providerUrl = new URL(`https://v2.convertapi.com/convert/${source}/to/${target}`)
   providerUrl.searchParams.set('StoreFile', 'false')
   if (mode === 'pdf-to-word') {

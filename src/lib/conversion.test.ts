@@ -1,16 +1,29 @@
 import { describe, expect, it } from 'vitest'
-import { outputName, validateConversionFile } from './conversion'
+import { outputName, validateConversionFile, validOfficeSignature } from './conversion'
 
-describe('conversion files', () => {
-  it('validates PDF and Word signatures', async () => {
-    await expect(validateConversionFile(new File([new Uint8Array([0x25,0x50,0x44,0x46,0x2d])], 'sample.pdf', {type:'application/pdf'}), 'pdf-to-word')).resolves.toBeUndefined()
-    const docx = new File([new Uint8Array([0x50,0x4b,0x03,0x04]), '[Content_Types].xml word/document.xml'], 'sample.docx')
-    await expect(validateConversionFile(docx, 'word-to-pdf')).resolves.toBeUndefined()
-    await expect(validateConversionFile(new File(['not a pdf'], 'sample.pdf'), 'pdf-to-word')).rejects.toThrow('valid PDF')
+const ole = new Uint8Array([0xd0,0xcf,0x11,0xe0,0xa1,0xb1,0x1a,0xe1,1])
+const zip = (marker: string) => new Uint8Array([...new Uint8Array([0x50,0x4b,0x03,0x04]), ...new TextEncoder().encode(`[Content_Types].xml ${marker}`)])
+
+describe('Office conversion validation', () => {
+  it('accepts the legacy OLE signatures for Word, Excel and PowerPoint', () => {
+    for (const ext of ['doc','xls','ppt']) expect(validOfficeSignature(ole, ext, '')).toBe(true)
+    expect(validOfficeSignature(new TextEncoder().encode('not office'), 'xls', '')).toBe(false)
   })
-
-  it('creates safe output names', () => {
-    expect(outputName('Quarterly report.docx', 'word-to-pdf')).toBe('Quarterly-report.pdf')
-    expect(outputName('scan.pdf', 'pdf-to-word')).toBe('scan.docx')
+  it('requires OOXML package markers and rejects an arbitrary ZIP', () => {
+    expect(validOfficeSignature(zip('xl/workbook.xml'), 'xlsx', 'xl/')).toBe(true)
+    expect(validOfficeSignature(zip('ppt/presentation.xml'), 'pptx', 'ppt/')).toBe(true)
+    expect(validOfficeSignature(zip('other/file.txt'), 'xlsx', 'xl/')).toBe(false)
+    expect(validOfficeSignature(zip('xl/workbook.xml'), 'pptx', 'ppt/')).toBe(false)
+  })
+  it('validates the Excel and PowerPoint mode-specific file types', async () => {
+    await expect(validateConversionFile(new File([zip('xl/workbook.xml') as BlobPart], 'book.xlsx'), 'excel-to-pdf')).resolves.toBeUndefined()
+    await expect(validateConversionFile(new File([ole as BlobPart], 'book.xls'), 'excel-to-pdf')).resolves.toBeUndefined()
+    await expect(validateConversionFile(new File([zip('ppt/presentation.xml') as BlobPart], 'deck.pptx'), 'powerpoint-to-pdf')).resolves.toBeUndefined()
+    await expect(validateConversionFile(new File([ole as BlobPart], 'deck.ppt'), 'powerpoint-to-pdf')).resolves.toBeUndefined()
+    await expect(validateConversionFile(new File([zip('random/file.txt') as BlobPart], 'book.xlsx'), 'excel-to-pdf')).rejects.toThrow('valid Excel spreadsheet')
+  })
+  it('keeps source-based PDF filenames', () => {
+    expect(outputName('Quarterly budget.xlsx', 'excel-to-pdf')).toBe('Quarterly-budget.pdf')
+    expect(outputName('Slides.pptx', 'powerpoint-to-pdf')).toBe('Slides.pdf')
   })
 })

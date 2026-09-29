@@ -2,7 +2,30 @@ import { safeBaseName } from './files'
 
 export const CONVERSION_MAX_BYTES = 20 * 1024 * 1024
 
-export type ConversionMode = 'word-to-pdf' | 'pdf-to-word'
+export type ConversionMode = 'word-to-pdf' | 'pdf-to-word' | 'excel-to-pdf' | 'powerpoint-to-pdf'
+
+const officeTypes: Record<string, string> = {
+  doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  xls: 'application/vnd.ms-excel',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  ppt: 'application/vnd.ms-powerpoint',
+  pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  pdf: 'application/pdf',
+}
+
+const officeModes = {
+  'word-to-pdf': { extensions: ['doc', 'docx'], marker: 'word/' },
+  'excel-to-pdf': { extensions: ['xls', 'xlsx'], marker: 'xl/' },
+  'powerpoint-to-pdf': { extensions: ['ppt', 'pptx'], marker: 'ppt/' },
+} as const
+
+export function validOfficeSignature(bytes: Uint8Array, extension: string, marker: string) {
+  if (['doc', 'xls', 'ppt'].includes(extension)) return startsWith(bytes, [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1])
+  if (!startsWith(bytes, [0x50, 0x4b, 0x03, 0x04])) return false
+  const names = new TextDecoder('latin1').decode(bytes)
+  return names.includes('[Content_Types].xml') && names.includes(marker)
+}
 
 const startsWith = (bytes: Uint8Array, signature: number[]) => signature.every((value, index) => bytes[index] === value)
 
@@ -10,31 +33,28 @@ export async function validateConversionFile(file: File, mode: ConversionMode) {
   if (!file.size) throw new Error('This file is empty. Please choose another file.')
   if (file.size > CONVERSION_MAX_BYTES) throw new Error('This file is larger than the 20 MB conversion limit.')
   const extension = file.name.toLowerCase().match(/\.([^.]+)$/)?.[1] ?? ''
-  const bytes = new Uint8Array(await file.slice(0, Math.min(file.size, 128 * 1024)).arrayBuffer())
+  const bytes = new Uint8Array(await file.slice(0, Math.min(file.size, 256 * 1024)).arrayBuffer())
   if (mode === 'pdf-to-word') {
     if (extension !== 'pdf') throw new Error('Please choose a PDF file.')
     if (!startsWith(bytes, [0x25, 0x50, 0x44, 0x46, 0x2d])) throw new Error('This file does not appear to be a valid PDF.')
     return
   }
-  if (!['doc', 'docx'].includes(extension)) throw new Error('Please choose a DOC or DOCX Word document.')
-  if (extension === 'doc') {
-    if (!startsWith(bytes, [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1])) throw new Error('This file does not appear to be a valid DOC document.')
-    return
-  }
-  if (!startsWith(bytes, [0x50, 0x4b, 0x03, 0x04])) throw new Error('This file does not appear to be a valid DOCX document.')
-  const marker = new TextDecoder('latin1').decode(bytes)
-  if (!marker.includes('[Content_Types].xml') && !marker.includes('word/')) throw new Error('This ZIP file does not appear to be a Word DOCX document.')
+  const { extensions, marker } = officeModes[mode]
+  const label = mode === 'word-to-pdf' ? 'Word document' : mode === 'excel-to-pdf' ? 'Excel spreadsheet' : 'PowerPoint presentation'
+  if (!(extensions as readonly string[]).includes(extension)) throw new Error(`Please choose a supported ${label}.`)
+  if (['docx','xlsx','pptx'].includes(extension) && startsWith(bytes, [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1])) throw new Error('This Office file appears to be password protected. Remove its password before converting.')
+  if (!validOfficeSignature(bytes, extension, marker)) throw new Error(`This file does not appear to be a valid ${label}.`)
 }
 
 export function outputName(fileName: string, mode: ConversionMode) {
-  return `${safeBaseName(fileName)}.${mode === 'word-to-pdf' ? 'pdf' : 'docx'}`
+  return `${safeBaseName(fileName)}.${mode === 'pdf-to-word' ? 'docx' : 'pdf'}`
 }
 
 export async function convertDocument(file: File, mode: ConversionMode, signal: AbortSignal) {
   const response = await fetch(`/api/convert/${mode}`, {
     method: 'POST', body: file, signal,
     headers: {
-      'Content-Type': file.type || (mode === 'pdf-to-word' ? 'application/pdf' : file.name.toLowerCase().endsWith('.docx') ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' : 'application/msword'),
+      'Content-Type': officeTypes[file.name.toLowerCase().match(/\.([^.]+)$/)?.[1] ?? ''] ?? 'application/octet-stream',
       'X-PDFHope-Filename': encodeURIComponent(file.name),
     },
   })
@@ -42,8 +62,8 @@ export async function convertDocument(file: File, mode: ConversionMode, signal: 
     let code = ''
     try { code = String((await response.json() as { code?: unknown }).code ?? '') } catch { /* sanitized fallback below */ }
     const messages: Record<string, string> = {
-      invalid_file: 'This file appears to be damaged or unsupported.',
-      password_protected: 'This PDF is password protected. Please remove the password and try again.',
+      invalid_file: mode === 'excel-to-pdf' ? 'This workbook appears to be damaged or unsupported.' : mode === 'powerpoint-to-pdf' ? 'This presentation appears to be damaged or unsupported.' : 'This file appears to be damaged or unsupported.',
+      password_protected: mode === 'pdf-to-word' ? 'This PDF is password protected. Please remove the password and try again.' : 'This Office file is password protected. Please remove the password and try again.',
       too_large: 'This file is larger than the 20 MB conversion limit.',
       rate_limited: 'Too many conversions were requested. Please wait a minute and try again.',
       timeout: 'Conversion took too long. Please try again.',
@@ -56,7 +76,7 @@ export async function convertDocument(file: File, mode: ConversionMode, signal: 
   }
   const blob = await response.blob()
   const signature = new Uint8Array(await blob.slice(0, 8).arrayBuffer())
-  const valid = mode === 'word-to-pdf'
+  const valid = mode !== 'pdf-to-word'
     ? startsWith(signature, [0x25, 0x50, 0x44, 0x46, 0x2d])
     : startsWith(signature, [0x50, 0x4b])
   if (!valid || !blob.size) throw new Error('The conversion service returned an invalid file. Please try again.')
