@@ -5,5 +5,5 @@
     "lib": ["ES2022"],
     "types": ["@cloudflare/workers-types"]
   },
-  "include": ["worker"]
+  "include": ["worker", "src/lib/officePackage.ts"]
 }

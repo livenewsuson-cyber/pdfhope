@@ -9,6 +9,8 @@ describe('competitive parity tool registry', () => {
     ['excel-to-pdf','excel-to-pdf','Convert','convert','Secure conversion'],
     ['powerpoint-to-pdf','powerpoint-to-pdf','Convert','convert','Secure conversion'],
     ['header-footer-pdf','header-footer','Edit','edit','Local'],
+    ['pdf-to-excel','pdf-to-excel','Convert','convert','Secure conversion'],
+    ['pdf-to-powerpoint','pdf-to-powerpoint','Convert','convert','Secure conversion'],
   ])('%s has route, kind, category, navigation, processing label and unique SEO', (slug, kind, category, groupId, processing) => {
     const tool = getTool(slug)
     expect(tool).toMatchObject({ slug, kind, category })

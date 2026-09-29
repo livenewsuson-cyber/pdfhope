@@ -34,7 +34,7 @@ describe('shared tool cards', () => {
   })
 
   it('labels all Office conversion as secure server conversion', () => {
-    const serverTools = ['word-to-pdf', 'pdf-to-word', 'excel-to-pdf', 'powerpoint-to-pdf']
+    const serverTools = ['word-to-pdf', 'pdf-to-word', 'excel-to-pdf', 'powerpoint-to-pdf', 'pdf-to-excel', 'pdf-to-powerpoint']
     for (const slug of serverTools) {
       expect(getToolProcessingMode(slug)).toBe('Secure conversion')
       expect(markup(slug, true)).toContain('Secure conversion')

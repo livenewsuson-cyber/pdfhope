@@ -13,7 +13,7 @@ type Status = 'empty' | 'ready' | 'uploading' | 'analyzing' | 'converting' | 'pr
 type ConversionCopy = {
   title: string; description: string; accept: string; select: string; drop: string
   action: string; download: string; badge: string; ready: string; note: string; result: string
-  steps: { uploading: string; converting: string; preparing: string; complete: string }
+  steps: { uploading: string; analyzing?: string; converting: string; preparing: string; complete: string }
 }
 
 const copy: Record<ConversionMode, ConversionCopy> = {
@@ -41,6 +41,18 @@ const copy: Record<ConversionMode, ConversionCopy> = {
     ready: 'create your PDF', note: 'Slides become static PDF pages; animations and transitions do not carry over. Speaker notes are not included by default.', result: 'PDF',
     steps: { uploading: 'Uploading', converting: 'Converting presentation', preparing: 'Preparing PDF', complete: 'Complete' },
   },
+  'pdf-to-excel': {
+    title: 'PDF to Excel Converter', description: 'Convert PDF tables and structured data into an editable Excel workbook.',
+    accept: 'application/pdf,.pdf', select: 'Select PDF File', drop: 'or drag & drop your PDF here', action: 'Convert to Excel', download: 'Download Excel', badge: 'PDF',
+    ready: 'create an editable Excel workbook', note: 'Clear tables work best. Scanned PDFs may use OCR; review extracted cells and numbers for accuracy.', result: 'Excel workbook',
+    steps: { uploading: 'Uploading', analyzing: 'Analyzing tables', converting: 'Converting PDF to Excel', preparing: 'Preparing XLSX', complete: 'Complete' },
+  },
+  'pdf-to-powerpoint': {
+    title: 'PDF to PowerPoint Converter', description: 'Convert PDF pages into PowerPoint slides with editable content where supported.',
+    accept: 'application/pdf,.pdf', select: 'Select PDF File', drop: 'or drag & drop your PDF here', action: 'Convert to PowerPoint', download: 'Download PowerPoint', badge: 'PDF',
+    ready: 'create your PowerPoint presentation', note: 'The engine reconstructs text and images where possible. Scanned pages may use OCR; review slide layout and editability.', result: 'PowerPoint presentation',
+    steps: { uploading: 'Uploading', analyzing: 'Analyzing pages', converting: 'Converting PDF to PowerPoint', preparing: 'Preparing PPTX', complete: 'Complete' },
+  },
 }
 
 export function DocumentConversionPage({ mode }: { mode: ConversionMode }) {
@@ -53,6 +65,7 @@ function DocumentConversionWorkspace({ mode }: { mode: ConversionMode }) {
   useSeo(seo.seoTitle, seo.metaDescription, `/${mode}`, true, true)
   const input = useRef<HTMLInputElement>(null)
   const runId = useRef(0)
+  const convertingRef = useRef(false)
   const [file, setFile] = useState<File | null>(null)
   const [status, setStatus] = useState<Status>('empty')
   const [result, setResult] = useState<Blob | null>(null)
@@ -67,12 +80,13 @@ function DocumentConversionWorkspace({ mode }: { mode: ConversionMode }) {
     catch (cause) { reset(); setError(cause instanceof Error ? cause.message : 'This file could not be opened.') }
   }
   const convert = async () => {
-    if (!file || busy) return
+    if (!file || busy || convertingRef.current) return
+    convertingRef.current = true
     const id = ++runId.current
     const controller = new AbortController()
     const timeout = window.setTimeout(() => controller.abort(), 125_000)
     setError(''); setStatus('uploading')
-    const analysisTimer = window.setTimeout(() => id === runId.current && setStatus(mode === 'pdf-to-word' ? 'analyzing' : 'converting'), 500)
+    const analysisTimer = window.setTimeout(() => id === runId.current && setStatus(mode.startsWith('pdf-to-') ? 'analyzing' : 'converting'), 500)
     const conversionTimer = window.setTimeout(() => id === runId.current && setStatus('converting'), 1_400)
     try {
       const converted = await convertDocument(file, mode, controller.signal)
@@ -82,9 +96,9 @@ function DocumentConversionWorkspace({ mode }: { mode: ConversionMode }) {
     } catch (cause) {
       if (id !== runId.current) return
       setStatus('ready'); setError(controller.signal.aborted ? 'Conversion took too long. Please try again.' : cause instanceof Error ? cause.message : 'Conversion failed. Please try again.')
-    } finally { clearTimeout(timeout); clearTimeout(analysisTimer); clearTimeout(conversionTimer) }
+    } finally { convertingRef.current = false; clearTimeout(timeout); clearTimeout(analysisTimer); clearTimeout(conversionTimer) }
   }
-  const currentStep = status === 'ready' ? 'Ready' : status === 'analyzing' ? 'Analyzing PDF' : status === 'empty' ? '' : info.steps[status]
+  const currentStep = status === 'ready' ? 'Ready' : status === 'analyzing' ? info.steps.analyzing ?? 'Analyzing PDF' : status === 'empty' ? '' : info.steps[status]
 
   return <main className="tool-page conversion-page"><div className="tool-breadcrumb"><Link to="/tools"><ArrowLeft size={16}/> All tools</Link><span>/</span><span>Convert</span></div>
     <section className="tool-intro"><div className="tool-intro-copy"><div className="tool-title-row"><ToolIcon slug={mode} compact/><h1>{info.title}</h1></div><p>{info.description}</p></div></section>

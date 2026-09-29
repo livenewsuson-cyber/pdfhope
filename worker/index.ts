@@ -1,3 +1,5 @@
+import { validReverseOfficePackage } from '../src/lib/officePackage'
+
 const MAX_FILE_BYTES = 20 * 1024 * 1024
 const PROVIDER_TIMEOUT_MS = 120_000
 
@@ -11,13 +13,15 @@ interface Env {
   CONVERSION_RATE_LIMITER: RateLimitBinding
 }
 
-type Mode = 'word-to-pdf' | 'pdf-to-word' | 'excel-to-pdf' | 'powerpoint-to-pdf'
+type Mode = 'word-to-pdf' | 'pdf-to-word' | 'excel-to-pdf' | 'powerpoint-to-pdf' | 'pdf-to-excel' | 'pdf-to-powerpoint'
 
 const routes: Record<string, Mode> = {
   '/api/convert/word-to-pdf': 'word-to-pdf',
   '/api/convert/pdf-to-word': 'pdf-to-word',
   '/api/convert/excel-to-pdf': 'excel-to-pdf',
   '/api/convert/powerpoint-to-pdf': 'powerpoint-to-pdf',
+  '/api/convert/pdf-to-excel': 'pdf-to-excel',
+  '/api/convert/pdf-to-powerpoint': 'pdf-to-powerpoint',
 }
 
 const jsonError = (status: number, code: string, requestId: string) => Response.json(
@@ -66,12 +70,13 @@ async function inspectStream(stream: ReadableStream<Uint8Array>, required = 8) {
 function providerCode(status: number, body: string, mode: Mode) {
   let code = 0
   try { code = Number((JSON.parse(body) as { Code?: unknown }).Code ?? 0) } catch { /* status mapping below */ }
-  if (code === 5003 || /password protected/i.test(body)) return 'password_protected'
+  if (code === 5003 || /password protected|encrypted.*pdf|pdf.*encrypted/i.test(body)) return 'password_protected'
   if (code === 5002 || status === 415) return 'invalid_file'
   if (code === 5000) return 'timeout'
   if (status === 403) return 'quota_exhausted'
   if (status === 429 || status === 503) return 'provider_unavailable'
-  if (mode === 'pdf-to-word' && /ocr/i.test(body)) return 'ocr_failed'
+  if (mode === 'pdf-to-excel' && /no tables|no tabular/i.test(body)) return 'no_tables'
+  if (['pdf-to-word', 'pdf-to-excel', 'pdf-to-powerpoint'].includes(mode) && /ocr/i.test(body)) return 'ocr_failed'
   return status >= 500 ? 'provider_unavailable' : 'invalid_file'
 }
 
@@ -88,7 +93,7 @@ async function handleConversion(request: Request, env: Env, mode: Mode, requestI
   const filename = safeFilename(request.headers.get('X-PDFHope-Filename'))
   const extension = extensionOf(filename)
   const allowedExtensions: Record<Mode, string[]> = {
-    'pdf-to-word': ['pdf'], 'word-to-pdf': ['doc', 'docx'],
+    'pdf-to-word': ['pdf'], 'pdf-to-excel': ['pdf'], 'pdf-to-powerpoint': ['pdf'], 'word-to-pdf': ['doc', 'docx'],
     'excel-to-pdf': ['xls', 'xlsx'], 'powerpoint-to-pdf': ['ppt', 'pptx'],
   }
   if (!allowedExtensions[mode].includes(extension)) return jsonError(415, 'invalid_file', requestId)
@@ -96,6 +101,8 @@ async function handleConversion(request: Request, env: Env, mode: Mode, requestI
   const contentType = request.headers.get('Content-Type')?.split(';')[0].trim().toLowerCase() ?? ''
   const allowedTypes: Record<Mode, string[]> = {
     'pdf-to-word': ['application/pdf', 'application/octet-stream'],
+    'pdf-to-excel': ['application/pdf', 'application/octet-stream'],
+    'pdf-to-powerpoint': ['application/pdf', 'application/octet-stream'],
     'word-to-pdf': ['application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/octet-stream'],
     'excel-to-pdf': ['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/octet-stream'],
     'powerpoint-to-pdf': ['application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'application/octet-stream'],
@@ -121,11 +128,16 @@ async function handleConversion(request: Request, env: Env, mode: Mode, requestI
   }
 
   const source = extension
-  const target = mode === 'pdf-to-word' ? 'docx' : 'pdf'
+  const target = mode === 'pdf-to-word' ? 'docx' : mode === 'pdf-to-excel' ? 'xlsx' : mode === 'pdf-to-powerpoint' ? 'pptx' : 'pdf'
   const providerUrl = new URL(`https://v2.convertapi.com/convert/${source}/to/${target}`)
   providerUrl.searchParams.set('StoreFile', 'false')
   if (mode === 'pdf-to-word') {
     providerUrl.searchParams.set('Layout', 'flowing')
+    providerUrl.searchParams.set('OcrMode', 'auto')
+    providerUrl.searchParams.set('OcrLanguage', 'auto')
+    providerUrl.searchParams.set('OcrEngine', 'native')
+  }
+  if (mode === 'pdf-to-excel' || mode === 'pdf-to-powerpoint') {
     providerUrl.searchParams.set('OcrMode', 'auto')
     providerUrl.searchParams.set('OcrLanguage', 'auto')
     providerUrl.searchParams.set('OcrEngine', 'native')
@@ -153,15 +165,15 @@ async function handleConversion(request: Request, env: Env, mode: Mode, requestI
     return jsonError(code === 'quota_exhausted' ? 503 : code === 'timeout' ? 504 : 422, code, requestId)
   }
   if (!providerResponse.body) return jsonError(502, 'provider_unavailable', requestId)
-  const result = await inspectStream(providerResponse.body)
-  if (!validMagic(result.prefix, target)) {
+  const result = await inspectStream(providerResponse.body, target === 'xlsx' || target === 'pptx' ? 2 * 1024 * 1024 : 8)
+  if (!(target === 'xlsx' || target === 'pptx' ? validReverseOfficePackage(result.prefix, target) : validMagic(result.prefix, target))) {
     await result.stream.cancel()
     return jsonError(502, mode === 'pdf-to-word' ? 'ocr_failed' : 'provider_unavailable', requestId)
   }
   const base = filename.replace(/\.[^.]+$/, '') || 'document'
   const output = `${base}.${target}`
   return new Response(result.stream, { headers: {
-    'Content-Type': target === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'Content-Type': target === 'pdf' ? 'application/pdf' : target === 'docx' ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' : target === 'xlsx' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     'Content-Disposition': `attachment; filename="${output}"`,
     'Cache-Control': 'private, no-store, max-age=0',
     'X-Content-Type-Options': 'nosniff',

@@ -24,6 +24,6 @@ export const routePages = {
 }
 
 export function preloadInitialPage(path: string) {
-  const page = path === '/' ? 'HomePage' : path === '/tools' ? 'ToolsPage' : path === '/pdf-reader' ? 'PdfReader' : path === '/edit-pdf' ? 'PdfEditor' : path === '/header-footer-pdf' ? 'HeaderFooterPage' : ['/protect-pdf', '/unlock-pdf'].includes(path) ? 'SecurityToolPage' : path === '/sign-pdf' ? 'SignPdfPage' : ['/word-to-pdf', '/pdf-to-word', '/excel-to-pdf', '/powerpoint-to-pdf'].includes(path) ? 'DocumentConversionPage' : ['/about', '/contact', '/privacy', '/privacy-policy', '/terms', '/cookie-policy', '/security', '/accessibility'].includes(path) ? 'InfoPage' : path === '/404' ? 'NotFound' : 'ToolPage'
+  const page = path === '/' ? 'HomePage' : path === '/tools' ? 'ToolsPage' : path === '/pdf-reader' ? 'PdfReader' : path === '/edit-pdf' ? 'PdfEditor' : path === '/header-footer-pdf' ? 'HeaderFooterPage' : ['/protect-pdf', '/unlock-pdf'].includes(path) ? 'SecurityToolPage' : path === '/sign-pdf' ? 'SignPdfPage' : ['/word-to-pdf', '/pdf-to-word', '/excel-to-pdf', '/pdf-to-excel', '/powerpoint-to-pdf', '/pdf-to-powerpoint'].includes(path) ? 'DocumentConversionPage' : ['/about', '/contact', '/privacy', '/privacy-policy', '/terms', '/cookie-policy', '/security', '/accessibility'].includes(path) ? 'InfoPage' : path === '/404' ? 'NotFound' : 'ToolPage'
   return routePages[page].preload()
 }

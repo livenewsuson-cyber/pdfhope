@@ -10,7 +10,7 @@ export const icons: Record<string, [LucideIcon, Accent]> = {
   'webp-to-pdf': [ImagePlus, 'teal'], 'images-to-pdf': [Images, 'teal'],
   'pdf-to-jpg': [FileImage, 'orange'], 'pdf-to-png': [FileImage, 'orange'],
   'word-to-pdf': [FileInput, 'orange'], 'pdf-to-word': [FileType2, 'blue'],
-  'excel-to-pdf': [Table2, 'green'], 'powerpoint-to-pdf': [Presentation, 'orange'],
+  'excel-to-pdf': [Table2, 'green'], 'pdf-to-excel': [Table2, 'green'], 'powerpoint-to-pdf': [Presentation, 'orange'], 'pdf-to-powerpoint': [Presentation, 'orange'],
   'compress-pdf': [Minimize2, 'green'],
   'pdf-size-breakdown': [ChartNoAxesColumn, 'green'], 'add-page-numbers': [Hash, 'blue'], 'header-footer-pdf': [PanelTopBottomDashed, 'blue'],
   'watermark-pdf': [Stamp, 'pink'], 'pdf-metadata-cleaner': [ShieldCheck, 'green'],
