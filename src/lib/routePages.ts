@@ -15,6 +15,7 @@ export const routePages = {
   ToolPage: deferredPage(() => import('../pages/ToolPage').then(module => ({ default: module.ToolPage }))),
   InfoPage: deferredPage(() => import('../pages/InfoPage').then(module => ({ default: module.InfoPage }))),
   PdfReader: deferredPage(() => import('../pages/PdfReader').then(module => ({ default: module.PdfReader }))),
+  OcrPdfPage: deferredPage(() => import('../pages/OcrPdfPage').then(module => ({ default: module.OcrPdfPage }))),
   PdfEditor: deferredPage(() => import('../pages/PdfEditor').then(module => ({ default: module.PdfEditor }))),
   DocumentConversionPage: deferredPage(() => import('../pages/DocumentConversionPage').then(module => ({ default: module.DocumentConversionPage }))),
   HeaderFooterPage: deferredPage(() => import('../pages/HeaderFooterPage').then(module => ({ default: module.HeaderFooterPage }))),
@@ -24,6 +25,6 @@ export const routePages = {
 }
 
 export function preloadInitialPage(path: string) {
-  const page = path === '/' ? 'HomePage' : path === '/tools' ? 'ToolsPage' : path === '/pdf-reader' ? 'PdfReader' : path === '/edit-pdf' ? 'PdfEditor' : path === '/header-footer-pdf' ? 'HeaderFooterPage' : ['/protect-pdf', '/unlock-pdf'].includes(path) ? 'SecurityToolPage' : path === '/sign-pdf' ? 'SignPdfPage' : ['/word-to-pdf', '/pdf-to-word', '/excel-to-pdf', '/pdf-to-excel', '/powerpoint-to-pdf', '/pdf-to-powerpoint'].includes(path) ? 'DocumentConversionPage' : ['/about', '/contact', '/privacy', '/privacy-policy', '/terms', '/cookie-policy', '/security', '/accessibility'].includes(path) ? 'InfoPage' : path === '/404' ? 'NotFound' : 'ToolPage'
+  const page = path === '/' ? 'HomePage' : path === '/tools' ? 'ToolsPage' : path === '/pdf-reader' ? 'PdfReader' : path === '/ocr-pdf' ? 'OcrPdfPage' : path === '/edit-pdf' ? 'PdfEditor' : path === '/header-footer-pdf' ? 'HeaderFooterPage' : ['/protect-pdf', '/unlock-pdf'].includes(path) ? 'SecurityToolPage' : path === '/sign-pdf' ? 'SignPdfPage' : ['/word-to-pdf', '/pdf-to-word', '/excel-to-pdf', '/pdf-to-excel', '/powerpoint-to-pdf', '/pdf-to-powerpoint'].includes(path) ? 'DocumentConversionPage' : ['/about', '/contact', '/privacy', '/privacy-policy', '/terms', '/cookie-policy', '/security', '/accessibility'].includes(path) ? 'InfoPage' : path === '/404' ? 'NotFound' : 'ToolPage'
   return routePages[page].preload()
 }

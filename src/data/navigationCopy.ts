@@ -1,5 +1,6 @@
 // Presentation-only copy for the desktop mega menu. ToolDefinition.short remains unchanged.
 export const megaMenuShort: Record<string, string> = {
+  'ocr-pdf': 'Make scans searchable',
   'word-to-pdf': 'Convert Word to PDF',
   'pdf-to-word': 'Create editable Word files',
   'excel-to-pdf': 'Convert spreadsheets to PDF',

@@ -11,9 +11,11 @@ describe('competitive parity tool registry', () => {
     ['header-footer-pdf','header-footer','Edit','edit','Local'],
     ['pdf-to-excel','pdf-to-excel','Convert','convert','Secure conversion'],
     ['pdf-to-powerpoint','pdf-to-powerpoint','Convert','convert','Secure conversion'],
+    ['ocr-pdf','ocr','Inspect','intelligence','Local'],
   ])('%s has route, kind, category, navigation, processing label and unique SEO', (slug, kind, category, groupId, processing) => {
     const tool = getTool(slug)
     expect(tool).toMatchObject({ slug, kind, category })
+    if (slug === 'ocr-pdf') expect(tool?.popular).toBe(true)
     expect(navigationGroups.find(group => group.id === groupId)?.tools.some(item => item.slug === slug)).toBe(true)
     expect(getToolProcessingMode(slug)).toBe(processing)
     expect(toolSeo[slug]?.seoTitle).toContain('PDFHope')

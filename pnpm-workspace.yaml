@@ -1,5 +1,6 @@
 allowBuilds:
   esbuild: true
+  tesseract.js: false
   workerd: true
 minimumReleaseAgeExclude:
   - '@cloudflare/vite-plugin@1.54.7'

@@ -49,7 +49,7 @@ export const navigationGroups: NavigationGroup[] = [
     id: 'intelligence',
     label: 'PDF Intelligence',
     description: 'Inspect and understand PDFs.',
-    tools: toolList(['pdf-health-check', 'blank-page-detector', 'duplicate-page-finder', 'page-size-analyzer', 'orientation-analyzer', 'pdf-reader']),
+    tools: toolList(['ocr-pdf', 'pdf-reader', 'pdf-health-check', 'blank-page-detector', 'duplicate-page-finder', 'page-size-analyzer', 'orientation-analyzer']),
   },
   {
     id: 'advanced',

@@ -331,6 +331,21 @@ footer{max-width:1240px;gap:44px;padding:58px 28px;margin-top:72px}
 @media(max-width:390px){.compression-target-settings{grid-template-columns:minmax(0,1fr) 86px;margin-left:0}}
 @media(max-width:1320px){.header .desktop-navigation{display:none}.mobile-menu-toggle,.header-actions .mobile-menu-toggle:first-child{display:grid}.header-actions .icon-button[aria-label="Search tools"]{display:grid}.mega-menu{display:none}}
 
+.ocr-privacy{margin:14px 0 0;color:var(--muted);font-size:.85rem;text-align:center}
+.ocr-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:18px 0}
+.ocr-summary>div{min-width:0;padding:14px;border:1px solid var(--line);border-radius:13px;background:var(--soft)}
+.ocr-summary span,.ocr-summary strong{display:block}.ocr-summary span{color:var(--muted);font-size:.78rem}.ocr-summary strong{margin-top:5px;color:var(--ink);font-size:1.15rem}
+.ocr-settings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:18px 0}
+.ocr-settings fieldset{display:flex;flex-direction:column;gap:8px;min-width:0;margin:0;padding:12px 14px;border:1px solid var(--line);border-radius:13px}
+.ocr-settings legend{padding:0 5px;color:var(--ink);font-size:.86rem;font-weight:800}
+.ocr-settings fieldset label{display:flex;align-items:flex-start;gap:8px;color:var(--text-secondary);font-size:.86rem;line-height:1.45;cursor:pointer}
+.ocr-settings input[type="radio"]{flex:none;margin-top:3px;accent-color:var(--accent)}
+.ocr-settings .field{min-width:0}.ocr-settings .field input,.ocr-settings .field select{width:100%;min-width:0}
+.ocr-notice{margin:12px 0;padding:11px 13px;border:1px solid var(--line);border-radius:11px;background:var(--soft);color:var(--text-secondary);font-size:.84rem;line-height:1.5}
+.ocr-settings .ocr-notice{grid-column:1/-1;margin:0}.ocr-error{margin:0;color:var(--danger);font-size:.85rem}
+.ocr-progress{display:flex;justify-content:space-between;gap:12px;margin:16px 0;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--soft);color:var(--ink);font-size:.85rem}
+@media(max-width:760px){.ocr-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.ocr-settings{grid-template-columns:1fr}.ocr-progress{flex-direction:column}}
+
 .header-footer-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(270px,360px);gap:28px;align-items:start}
 .header-footer-fields,.header-footer-preview{min-width:0}
 .header-footer-block{display:grid;gap:12px;min-width:0;margin:0 0 18px;padding:16px;border:1px solid var(--line);border-radius:14px}

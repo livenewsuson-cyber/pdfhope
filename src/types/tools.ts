@@ -3,7 +3,7 @@ export type ToolCategory = 'Organize' | 'Convert' | 'Optimize' | 'Secure' | 'Edi
 export type ToolKind =
   | 'merge' | 'split' | 'extract' | 'delete' | 'reorder' | 'rotate'
   | 'images-to-pdf' | 'pdf-to-image' | 'page-numbers' | 'watermark'
-  | 'metadata' | 'health' | 'blank' | 'page-size' | 'orientation'
+  | 'metadata' | 'health' | 'ocr' | 'blank' | 'page-size' | 'orientation'
   | 'duplicate' | 'interleave' | 'deinterleave' | 'n-up' | 'contact-sheet'
   | 'word-to-pdf' | 'pdf-to-word' | 'excel-to-pdf' | 'powerpoint-to-pdf' | 'pdf-to-excel' | 'pdf-to-powerpoint' | 'header-footer' | 'compress' | 'protect' | 'unlock' | 'sign'
 
