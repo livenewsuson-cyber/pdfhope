@@ -13,6 +13,8 @@ function deferredPage<T extends ComponentType<any>>(load: () => Promise<{ defaul
 export const routePages = {
   HomePage: deferredPage(() => import('../pages/HomePage').then(module => ({ default: module.HomePage }))),
   ToolsPage: deferredPage(() => import('../pages/ToolsPage').then(module => ({ default: module.ToolsPage }))),
+  GuidesPage: deferredPage(() => import('../pages/GuidesPage').then(module => ({ default: module.GuidesPage }))),
+  GuidePage: deferredPage(() => import('../pages/GuidePage').then(module => ({ default: module.GuidePage }))),
   CategoryPage: deferredPage(() => import('../pages/CategoryPage').then(module => ({ default: module.CategoryPage }))),
   ToolPage: deferredPage(() => import('../pages/ToolPage').then(module => ({ default: module.ToolPage }))),
   InfoPage: deferredPage(() => import('../pages/InfoPage').then(module => ({ default: module.InfoPage }))),
@@ -27,6 +29,6 @@ export const routePages = {
 }
 
 export function preloadInitialPage(path: string) {
-  const page = path === '/' ? 'HomePage' : path === '/tools' ? 'ToolsPage' : categoryHubByPath[path] ? 'CategoryPage' : path === '/pdf-reader' ? 'PdfReader' : path === '/ocr-pdf' ? 'OcrPdfPage' : path === '/edit-pdf' ? 'PdfEditor' : path === '/header-footer-pdf' ? 'HeaderFooterPage' : ['/protect-pdf', '/unlock-pdf'].includes(path) ? 'SecurityToolPage' : path === '/sign-pdf' ? 'SignPdfPage' : ['/word-to-pdf', '/pdf-to-word', '/excel-to-pdf', '/pdf-to-excel', '/powerpoint-to-pdf', '/pdf-to-powerpoint'].includes(path) ? 'DocumentConversionPage' : ['/about', '/contact', '/privacy', '/privacy-policy', '/terms', '/cookie-policy', '/security', '/accessibility'].includes(path) ? 'InfoPage' : path === '/404' ? 'NotFound' : 'ToolPage'
+  const page = path === '/' ? 'HomePage' : path === '/tools' ? 'ToolsPage' : path === '/guides' ? 'GuidesPage' : path.startsWith('/guides/') ? 'GuidePage' : categoryHubByPath[path] ? 'CategoryPage' : path === '/pdf-reader' ? 'PdfReader' : path === '/ocr-pdf' ? 'OcrPdfPage' : path === '/edit-pdf' ? 'PdfEditor' : path === '/header-footer-pdf' ? 'HeaderFooterPage' : ['/protect-pdf', '/unlock-pdf'].includes(path) ? 'SecurityToolPage' : path === '/sign-pdf' ? 'SignPdfPage' : ['/word-to-pdf', '/pdf-to-word', '/excel-to-pdf', '/pdf-to-excel', '/powerpoint-to-pdf', '/pdf-to-powerpoint'].includes(path) ? 'DocumentConversionPage' : ['/about', '/contact', '/privacy', '/privacy-policy', '/terms', '/cookie-policy', '/security', '/accessibility'].includes(path) ? 'InfoPage' : path === '/404' ? 'NotFound' : 'ToolPage'
   return routePages[page].preload()
 }

@@ -1,4 +1,4 @@
-import { ArrowRight, Clock3, Laptop, LockKeyhole, Search, Server, ShieldCheck, Smartphone, Sparkles, Zap } from 'lucide-react'
+import { ArrowRight, BookOpen, Clock3, Laptop, LockKeyhole, Search, Server, ShieldCheck, Smartphone, Sparkles, Zap } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getTool, tools } from '../data/tools'
@@ -7,6 +7,7 @@ import { HomeToolDiscovery } from '../components/HomeToolDiscovery'
 import { ToolIcon } from '../components/ToolIcon'
 import { useSeo } from '../hooks/useSeo'
 import { categoryHubs } from '../data/categoryHubs'
+import { guideReadingMinutes, guides } from '../data/guides'
 
 export function HomePage() {
   useSeo('Every PDF tool you need', 'Fast PDF tools to convert, organize, edit and inspect documents, with local processing where supported and secure server conversion when needed.', '/')
@@ -44,6 +45,8 @@ export function HomePage() {
     <section className="privacy-band"><div className="privacy-intro"><div className="privacy-orbit"><ShieldCheck size={38} /></div><div><span className="kicker">Designed for privacy</span><h2>Clear processing, not blanket claims.</h2><p>PDFHope tells you where a file is processed before you act.</p></div></div><div className="privacy-modes"><article><Laptop size={20} /><div><strong>Most browser PDF tools</strong><p>Merge, split, inspect and edit locally on your device.</p></div></article><article><Server size={20} /><div><strong>Office document conversion</strong><p>Uses a secure server conversion workflow when you choose Convert.</p></div></article></div><Link to="/privacy">How processing works <ArrowRight size={16} /></Link></section>
 
     <section className="why-section"><div><span className="kicker">Why PDFHope</span><h2>Serious tools.<br />Less friction.</h2><p>No account wall, noisy dashboard, or hidden workflow between you and the result.</p></div><div className="benefit-grid"><article><Zap /><h3>Fast by design</h3><p>The homepage stays light and loads PDF engines only when a workflow needs them.</p></article><article><LockKeyhole /><h3>Privacy-conscious</h3><p>Local tools keep file bytes in browser memory; server conversion is clearly labeled.</p></article><article><Smartphone /><h3>Made for any screen</h3><p>Responsive layouts and comfortable controls make quick edits practical on mobile.</p></article><article><Search /><h3>Easy to find</h3><p>Search, grouped navigation, favorites and recent tools shorten the path back.</p></article></div></section>
+
+    <section className="home-guides"><div className="section-heading"><div><span className="kicker">PDF Guides</span><h2>Understand what happens to your PDF</h2></div><Link to="/guides">All guides <ArrowRight size={16} aria-hidden="true" /></Link></div><div className="home-guide-grid">{guides.map((guide) => <Link to={`/guides/${guide.slug}`} key={guide.slug}><span className="guide-card-icon" aria-hidden="true"><BookOpen size={19} /></span><small>{guide.topic} · {guideReadingMinutes(guide)} min read</small><strong>{guide.title}</strong><ArrowRight size={16} aria-hidden="true" /></Link>)}</div></section>
 
     <section className="seo-copy"><div><span className="kicker">Useful by default</span><h2>What makes a browser PDF tool different?</h2></div><p>Traditional online PDF tools often send documents to a remote server for processing. PDFHope’s supported local tools use JavaScript PDF libraries, browser canvas rendering, and local memory instead. Browser memory still has limits, especially for image-heavy documents, so the interface warns about large files and reports failures clearly.</p></section>
     <section className="faq home-faq"><span className="kicker">Common questions</span><h2>PDFHope FAQ</h2><details><summary>Is PDFHope free?</summary><p>The local tools are free to use and do not require an account. Server-based document conversion is subject to service availability and usage limits.</p></details><details><summary>Does PDFHope upload my files?</summary><p>Most PDF tools process files locally in your browser. Word, Excel and PowerPoint conversion pages clearly identify their secure server conversion step and send the selected file only when you choose Convert.</p></details><details><summary>Which browsers work best?</summary><p>Current versions of Chrome, Edge, Firefox, and Safari are recommended. Large files work best on devices with more available memory.</p></details></section>

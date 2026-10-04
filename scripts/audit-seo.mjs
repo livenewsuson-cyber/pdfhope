@@ -13,11 +13,15 @@ assert.equal(sitemap.status, 200)
 const urls = [...sitemap.text.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => match[1])
 const toolSlugs = [...(await readFile('src/data/tools.ts', 'utf8')).matchAll(/\bslug:'([^']+)'/g)].map(match => match[1])
 const categoryPaths = [...(await readFile('src/data/categoryHubs.ts', 'utf8')).matchAll(/\bpath:\s*'([^']+)'/g)].map(match => match[1])
+const guideSlugs = [...(await readFile('src/data/guides.ts', 'utf8')).matchAll(/\n\s+slug: '([^']+)'/g)].map(match => match[1])
+const guidePaths = ['/guides', ...guideSlugs.map(slug => `/guides/${slug}`)]
 assert.equal(categoryPaths.length, 7, 'Expected seven category hubs')
-const expectedRoutes = toolSlugs.length + categoryPaths.length + 10 // homepage, catalog, and eight information pages
+assert.equal(guideSlugs.length, 3, 'Expected exactly three guides')
+const expectedRoutes = toolSlugs.length + categoryPaths.length + guidePaths.length + 10 // homepage, catalog, guides, and eight information pages
 assert.equal(urls.length, expectedRoutes)
 for (const slug of toolSlugs) assert.ok(urls.includes(`https://pdfhope.com/${slug}`), `Missing tool route: ${slug}`)
 for (const path of categoryPaths) assert.ok(urls.includes(`https://pdfhope.com${path}`), `Missing category route: ${path}`)
+for (const path of guidePaths) assert.ok(urls.includes(`https://pdfhope.com${path}`), `Missing guide route: ${path}`)
 assert.equal(new Set(urls).size, urls.length)
 const results = [], links = new Set(), titles = new Set(), descriptions = new Set(), htmlByPath = new Map(), toolCategories = new Map()
 for (const url of urls) {
@@ -48,15 +52,15 @@ for (const url of urls) {
   assert.ok(!titles.has(title), `${path}: duplicate title`); titles.add(title)
   assert.ok(!descriptions.has(description), `${path}: duplicate description`); descriptions.add(description)
   const schemas = [...text.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)].map(match => JSON.parse(match[1]))
-  const isTool = toolSlugs.includes(path.slice(1)), isCategory = categoryPaths.includes(path)
+  const isTool = toolSlugs.includes(path.slice(1)), isCategory = categoryPaths.includes(path), isGuideIndex = path === '/guides', isGuide = guidePaths.slice(1).includes(path)
   const breadcrumbs = schemas.filter(schema => schema['@type'] === 'BreadcrumbList')
-  if (isTool || isCategory) {
+  if (isTool || isCategory || isGuideIndex || isGuide) {
     assert.equal(breadcrumbs.length, 1, `${path}: exactly one BreadcrumbList schema`)
     const items = breadcrumbs[0].itemListElement
-    assert.equal(items.length, isTool ? 4 : 3, `${path}: breadcrumb depth`)
+    assert.equal(items.length, isTool ? 4 : isCategory || isGuide ? 3 : 2, `${path}: breadcrumb depth`)
     assert.deepEqual(items.map(item => item.position), items.map((_, index) => index + 1), `${path}: breadcrumb positions`)
     assert.equal(items[0].item, 'https://pdfhope.com/')
-    assert.equal(items[1].item, 'https://pdfhope.com/tools')
+    assert.equal(items[1].item, isGuideIndex || isGuide ? 'https://pdfhope.com/guides' : 'https://pdfhope.com/tools')
     assert.equal(items.at(-1).item, url, `${path}: final breadcrumb URL`)
     const visible = text.match(/<nav[^>]*aria-label="Breadcrumb"[^>]*>([\s\S]*?)<\/nav>/)?.[1]
     assert.ok(visible, `${path}: visible breadcrumb`)
@@ -80,6 +84,19 @@ for (const url of urls) {
     assert.match(text, /<summary>/, `${path}: visible FAQs`)
     assert.ok(Buffer.byteLength(text) > 6500, `${path}: insufficient rendered category content`)
   }
+  if (isGuideIndex) {
+    assert.equal(schemas.filter(schema => schema['@type'] === 'CollectionPage' && schema.url === url).length, 1, `${path}: CollectionPage schema`)
+    for (const guidePath of guidePaths.slice(1)) assert.ok(text.includes(`href="${guidePath}"`), `${path}: guide card link ${guidePath}`)
+  }
+  if (isGuide) {
+    const articles = schemas.filter(schema => schema['@type'] === 'Article' && schema.url === url)
+    assert.equal(articles.length, 1, `${path}: Article schema`)
+    assert.equal(articles[0].mainEntityOfPage['@id'], url, `${path}: Article mainEntityOfPage`)
+    assert.equal(articles[0].publisher.name, 'PDFHope', `${path}: truthful organization publisher`)
+    assert.match(text, /Short answer/, `${path}: answer-first block`)
+    assert.match(text, /Frequently asked questions/, `${path}: visible FAQ`)
+    assert.ok(Buffer.byteLength(text) > 14000, `${path}: insufficient rendered guide content`)
+  }
   for (const match of text.matchAll(/<a[^>]*href="(\/[^"#]*)"/g)) links.add(match[1].split('?')[0])
   assert.ok(!text.includes('<div id="root"></div>'), `${path}: empty app shell`)
   if (origin === 'https://pdfhope.com') assert.ok(!/noindex/i.test(headers['x-robots-tag'] || ''))
@@ -94,6 +111,13 @@ for (const [toolPath, categoryPath] of toolCategories) {
   assert.ok(htmlByPath.get('/tools')?.includes(`href="${toolPath}"`), `${toolPath}: catalog tool link`)
   assert.ok(htmlByPath.get(categoryPath)?.includes(`href="${toolPath}"`), `${toolPath}: category tool link`)
 }
+const expectedGuideLinks = {
+  '/ocr-pdf': '/guides/make-scanned-pdf-searchable',
+  '/compress-pdf': '/guides/compress-pdf-without-losing-searchable-text',
+  '/pdf-to-word': '/guides/pdf-to-word-formatting-changes',
+}
+for (const [toolPath, guidePath] of Object.entries(expectedGuideLinks)) assert.ok(htmlByPath.get(toolPath)?.includes(`href="${guidePath}"`), `${toolPath}: contextual guide link`)
+for (const [categoryPath, guidePath] of Object.entries({ '/pdf-analysis-tools': expectedGuideLinks['/ocr-pdf'], '/optimize-pdf': expectedGuideLinks['/compress-pdf'], '/pdf-converters': expectedGuideLinks['/pdf-to-word'] })) assert.ok(htmlByPath.get(categoryPath)?.includes(`href="${guidePath}"`), `${categoryPath}: guide link`)
 const robots = await read('/robots.txt')
 assert.equal(robots.status, 200)
 assert.match(robots.text, /Sitemap: https:\/\/pdfhope.com\/sitemap.xml/)
@@ -113,4 +137,4 @@ if (origin === 'https://pdfhope.com') {
   }
 }
 if (artifact) await writeFile(artifact, JSON.stringify({ origin: origin || 'local build', checkedAt: new Date().toISOString(), passed: true, results }, null, 2))
-console.log(`PASS: ${results.length} unique indexable pages; ${categoryPaths.length} category hubs, ${toolSlugs.length} tool schemas, breadcrumbs, crawlable internal links, sitemap and robots${origin ? '; HTTP statuses and real 404s' : ''}.`)
+console.log(`PASS: ${results.length} unique indexable pages; ${categoryPaths.length} category hubs, ${guideSlugs.length} guides, ${toolSlugs.length} tool schemas, breadcrumbs, crawlable internal links, sitemap and robots${origin ? '; HTTP statuses and real 404s' : ''}.`)

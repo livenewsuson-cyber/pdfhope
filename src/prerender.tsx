@@ -4,9 +4,10 @@ import App from './App'
 import { tools } from './data/tools'
 import { categoryHubs } from './data/categoryHubs'
 import { breadcrumbSchema } from './lib/breadcrumbs'
-import { SeoContext, collectionPage, webApplication, type PageSeo } from './lib/seo'
+import { SeoContext, articleSchema, collectionPage, webApplication, type PageSeo } from './lib/seo'
+import { guidePaths } from './data/guides'
 
-export const paths = ['/', '/tools', ...categoryHubs.map(hub => hub.path), ...tools.map(tool => `/${tool.slug}`), ...['about', 'contact', 'privacy', 'privacy-policy', 'terms', 'cookie-policy', 'security', 'accessibility'].map(path => `/${path}`)]
+export const paths = ['/', '/tools', ...guidePaths, ...categoryHubs.map(hub => hub.path), ...tools.map(tool => `/${tool.slug}`), ...['about', 'contact', 'privacy', 'privacy-policy', 'terms', 'cookie-policy', 'security', 'accessibility'].map(path => `/${path}`)]
 const escape = (text: string) => text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
 export async function render(path: string) {
@@ -24,10 +25,11 @@ export async function render(path: string) {
     <meta property="og:title" content="${escape(title)}" />
     <meta property="og:description" content="${escape(description)}" />
     <meta property="og:url" content="${canonical}" />
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content="${articleSchema(page) ? 'article' : 'website'}" />
     <meta name="twitter:card" content="summary" />
     ${tools.some(tool => path === `/${tool.slug}`) ? `<script id="tool-structured-data" type="application/ld+json">${JSON.stringify(webApplication(page)).replace(/</g, '\\u003c')}</script>` : ''}
     ${collectionPage(page) ? `<script id="category-structured-data" type="application/ld+json">${JSON.stringify(collectionPage(page)).replace(/</g, '\\u003c')}</script>` : ''}
+    ${articleSchema(page) ? `<script id="article-structured-data" type="application/ld+json">${JSON.stringify(articleSchema(page)).replace(/</g, '\\u003c')}</script>` : ''}
     ${breadcrumbSchema(path) ? `<script id="breadcrumb-structured-data" type="application/ld+json">${JSON.stringify(breadcrumbSchema(path)).replace(/</g, '\\u003c')}</script>` : ''}`
   return { body, head }
 }

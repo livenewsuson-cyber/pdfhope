@@ -5,7 +5,14 @@ import { navigationGroups } from '../data/navigation'
 import { getTool } from '../data/tools'
 import { SeoBreadcrumbs } from '../components/SeoBreadcrumbs'
 import { ToolCard } from '../components/ToolCard'
+import { guideBySlug } from '../data/guides'
 import { useSeo } from '../hooks/useSeo'
+
+const categoryGuideSlugs: Partial<Record<string, string>> = {
+  intelligence: 'make-scanned-pdf-searchable',
+  optimize: 'compress-pdf-without-losing-searchable-text',
+  convert: 'pdf-to-word-formatting-changes',
+}
 
 export function CategoryPage() {
   const { pathname } = useLocation()
@@ -24,6 +31,7 @@ function CategoryHubPage({ hub }: { hub: (typeof categoryHubById)[keyof typeof c
     <section className="category-guidance"><span className="kicker">Practical guide</span><h2>How to choose the right tool</h2><div className="category-guidance-grid">{hub.choosing.map((item) => <article key={item.title}><h3>{item.title}</h3><p>{item.text}</p><Link to={`/${item.tool}`}>{getTool(item.tool)?.name} <ArrowRight size={15} aria-hidden="true" /></Link></article>)}</div></section>
     <section className="category-context"><article><h2>Common use cases</h2><ul>{hub.useCases.map((item) => <li key={item}>{item}</li>)}</ul></article>{hub.details.map((item) => <article key={item.title}><h2>{item.title}</h2><p>{item.text}</p></article>)}</section>
     <section className="faq category-faq"><span className="kicker">Questions</span><h2>{hub.label} FAQ</h2>{hub.faq.map((item) => <details key={item.question}><summary>{item.question}</summary><p>{item.answer}</p></details>)}</section>
+    {categoryGuideSlugs[hub.id] && (() => { const guide = guideBySlug[categoryGuideSlugs[hub.id]!]; return <section className="category-learn"><span className="kicker">Learn more</span><h2>Guides</h2><Link to={`/guides/${guide.slug}`}><strong>{guide.title}</strong><span>{guide.description}</span><ArrowRight size={17} aria-hidden="true" /></Link></section> })()}
     <section className="category-related"><span className="kicker">Continue exploring</span><h2>Related PDF tool categories</h2><div>{hub.related.map((id) => { const related = categoryHubById[id]; return <Link to={related.path} key={id}><strong>{related.label}</strong><span>{related.description}</span><ArrowRight size={17} aria-hidden="true" /></Link> })}</div><p>Need the complete list? Browse <Link to="/tools">all PDF tools</Link>.</p></section>
   </main>
 }
