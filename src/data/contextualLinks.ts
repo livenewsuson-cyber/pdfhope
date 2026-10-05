@@ -49,4 +49,8 @@ export const contextualLinks: Record<string, ContextualLink[]> = {
     { before: 'Search and copy from the result with ', slug: 'pdf-reader', label: 'PDF Reader', after: ' to review recognition accuracy.' },
     { before: 'To inspect whether the source already has text, start with ', slug: 'pdf-health-check', label: 'PDF Health Check', after: '.' },
   ],
+  'pdf-health-check': [
+    { before: 'Found mixed portrait and landscape pages? Use ', slug: 'orientation-analyzer', label: 'PDF Orientation Analyzer', after: ' to see the affected page numbers.' },
+    { before: 'If the report points to image-only pages, use ', slug: 'ocr-pdf', label: 'OCR PDF', after: ' when you need searchable text.' },
+  ],
 }

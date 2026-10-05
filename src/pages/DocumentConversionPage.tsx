@@ -24,7 +24,7 @@ const copy: Record<ConversionMode, ConversionCopy> = {
     steps: { uploading: 'Uploading', converting: 'Converting Word to PDF', preparing: 'Preparing PDF', complete: 'Complete' },
   },
   'pdf-to-word': {
-    title: 'PDF to Word Converter', description: 'Convert PDF files into editable Microsoft Word documents online.',
+    title: 'PDF to Word Converter', description: 'Convert a PDF into an editable Word DOCX. Automatic OCR helps with scanned pages; review the reconstructed layout.',
     accept: 'application/pdf,.pdf', select: 'Select PDF File', drop: 'or drag & drop your PDF here', action: 'Convert to Word', download: 'Download Word', badge: 'PDF',
     ready: 'create an editable DOCX', note: 'Automatic OCR is enabled for scanned pages. The result remains editable where recognition is possible.', result: 'Word document',
     steps: { uploading: 'Uploading', converting: 'Converting PDF to Word', preparing: 'Preparing DOCX', complete: 'Complete' },

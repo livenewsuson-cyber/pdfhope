@@ -152,11 +152,13 @@ if (origin) {
   assert.equal((await read('/404')).status, 404)
 }
 if (origin === 'https://pdfhope.com') {
-  for (const path of ['/', '/merge-pdf?seo-check=1', '/pdf-to-word', '/word-to-pdf', '/blank-page-detector']) {
-    const redirect = await fetch(`https://www.pdfhope.com${path}`, { redirect: 'manual' })
-    assert.equal(redirect.status, 301, `${path}: www must redirect permanently`)
-    assert.equal(redirect.headers.get('Location'), `${origin}${path}`, `${path}: redirect must preserve path and query`)
-    await redirect.arrayBuffer()
+  for (const host of ['http://pdfhope.com', 'http://www.pdfhope.com', 'https://www.pdfhope.com']) {
+    for (const path of ['/', '/split-pdf?seo-check=1', '/guides/pdf-to-excel', '/pdf-reader']) {
+      const redirect = await fetch(`${host}${path}`, { redirect: 'manual' })
+      assert.ok([301, 308].includes(redirect.status), `${host}${path}: must redirect permanently`)
+      assert.equal(redirect.headers.get('Location'), `${origin}${path}`, `${host}${path}: one-hop redirect must preserve path and query`)
+      await redirect.arrayBuffer()
+    }
   }
 }
 if (artifact) await writeFile(artifact, JSON.stringify({ origin: origin || 'local build', checkedAt: new Date().toISOString(), passed: true, results }, null, 2))

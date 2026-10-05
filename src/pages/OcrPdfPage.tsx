@@ -86,7 +86,7 @@ export function OcrPdfPage() {
   const name = safeBaseName(file?.name ?? 'document')
 
   return <main className="tool-page ocr-page"><SeoBreadcrumbs path="/ocr-pdf"/>
-    <section className="tool-intro"><div className="tool-intro-copy"><div className="tool-title-row"><ToolIcon slug={slug} compact/><h1>OCR PDF</h1></div><p>{tool.description}</p></div></section>
+    <section className="tool-intro"><div className="tool-intro-copy"><div className="tool-title-row"><ToolIcon slug={slug} compact/><h1>OCR PDF</h1></div><p>Make scanned PDF pages searchable with local OCR. Recognize printed English text while keeping the original page appearance.</p></div></section>
     {error && <div className="error-panel" role="alert"><div><strong>We couldn’t continue</strong><p>{error}</p>{/password-protected/i.test(error) && <Link to="/unlock-pdf">Unlock PDF</Link>}</div></div>}
     <section className="workspace-card">
       {phase === 'empty' && <><FileDropzone accept={tool.accepts} onFiles={(files) => { void accept(files) }}/><p className="ocr-privacy">Processed locally in this browser. OCR engine and English language data download from PDFHope when needed; PDF pages are not uploaded.</p></>}
