@@ -1,3 +1,5 @@
+import { guideBatch2 } from './guideBatch2'
+
 export type GuideLink = { path: string; label: string; description: string }
 export type GuideSection = {
   heading: string
@@ -8,7 +10,7 @@ export type GuideSection = {
 }
 export type Guide = {
   slug: string
-  topic: 'OCR' | 'Compression' | 'Conversion'
+  topic: 'OCR' | 'Compression' | 'Conversion' | 'Organize' | 'Security'
   title: string
   seoTitle: string
   description: string
@@ -16,7 +18,9 @@ export type Guide = {
   shortAnswer: string
   datePublished: string
   primaryTool: GuideLink
+  additionalPrimaryTools?: GuideLink[]
   relatedTools: GuideLink[]
+  relatedGuides?: string[]
   sections: GuideSection[]
   faq: { question: string; answer: string }[]
 }
@@ -325,6 +329,7 @@ export const guides: Guide[] = [
       { question: 'Does PDFHope process PDF-to-Word locally?', answer: 'No. PDF-to-Word uses a clearly labeled secure server/provider workflow after you choose Convert. Local tools such as PDF Reader and OCR PDF have a different processing boundary.' },
     ],
   },
+  ...guideBatch2,
 ]
 
 export const guideBySlug = Object.fromEntries(guides.map((guide) => [guide.slug, guide])) as Record<string, Guide>

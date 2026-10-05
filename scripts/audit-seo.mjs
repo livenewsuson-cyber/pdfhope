@@ -13,17 +13,19 @@ assert.equal(sitemap.status, 200)
 const urls = [...sitemap.text.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => match[1])
 const toolSlugs = [...(await readFile('src/data/tools.ts', 'utf8')).matchAll(/\bslug:'([^']+)'/g)].map(match => match[1])
 const categoryPaths = [...(await readFile('src/data/categoryHubs.ts', 'utf8')).matchAll(/\bpath:\s*'([^']+)'/g)].map(match => match[1])
-const guideSlugs = [...(await readFile('src/data/guides.ts', 'utf8')).matchAll(/\n\s+slug: '([^']+)'/g)].map(match => match[1])
+const guideSource = `${await readFile('src/data/guides.ts', 'utf8')}\n${await readFile('src/data/guideBatch2.ts', 'utf8')}`
+const guideSlugs = [...guideSource.matchAll(/\n\s+slug: '([^']+)'/g)].map(match => match[1])
 const guidePaths = ['/guides', ...guideSlugs.map(slug => `/guides/${slug}`)]
 assert.equal(categoryPaths.length, 7, 'Expected seven category hubs')
-assert.equal(guideSlugs.length, 3, 'Expected exactly three guides')
+assert.ok(guideSlugs.length > 0, 'Expected guides in the guide registry')
+assert.equal(new Set(guideSlugs).size, guideSlugs.length, 'Guide slugs must be unique')
 const expectedRoutes = toolSlugs.length + categoryPaths.length + guidePaths.length + 10 // homepage, catalog, guides, and eight information pages
 assert.equal(urls.length, expectedRoutes)
 for (const slug of toolSlugs) assert.ok(urls.includes(`https://pdfhope.com/${slug}`), `Missing tool route: ${slug}`)
 for (const path of categoryPaths) assert.ok(urls.includes(`https://pdfhope.com${path}`), `Missing category route: ${path}`)
 for (const path of guidePaths) assert.ok(urls.includes(`https://pdfhope.com${path}`), `Missing guide route: ${path}`)
 assert.equal(new Set(urls).size, urls.length)
-const results = [], links = new Set(), titles = new Set(), descriptions = new Set(), htmlByPath = new Map(), toolCategories = new Map()
+const results = [], links = new Set(), titles = new Set(), descriptions = new Set(), guideH1s = new Set(), guideIntros = new Set(), htmlByPath = new Map(), toolCategories = new Map(), guidePrimaryTools = new Map()
 for (const url of urls) {
   assert.equal(new URL(url).origin, 'https://pdfhope.com')
   assert.equal(new URL(url).search, '')
@@ -96,6 +98,16 @@ for (const url of urls) {
     assert.match(text, /Short answer/, `${path}: answer-first block`)
     assert.match(text, /Frequently asked questions/, `${path}: visible FAQ`)
     assert.ok(Buffer.byteLength(text) > 14000, `${path}: insufficient rendered guide content`)
+    assert.ok(!guideH1s.has(h1), `${path}: duplicate guide H1`); guideH1s.add(h1)
+    const intro = one(/<p class="guide-lede">([\s\S]*?)<\/p>/g, 'guide intro').replace(/<[^>]+>/g, '')
+    assert.ok(!guideIntros.has(intro), `${path}: duplicate guide intro`); guideIntros.add(intro)
+    const primaryPaths = one(/data-primary-paths="([^"]+)"/g, 'primary tool paths').split(',')
+    assert.ok(primaryPaths.length >= 1, `${path}: primary tool path`)
+    for (const primaryPath of primaryPaths) {
+      assert.ok(toolSlugs.includes(primaryPath.slice(1)), `${path}: unknown primary tool ${primaryPath}`)
+      assert.ok(text.includes(`data-primary-tool="true" href="${primaryPath}"`), `${path}: visible primary CTA ${primaryPath}`)
+    }
+    guidePrimaryTools.set(path, primaryPaths)
   }
   for (const match of text.matchAll(/<a[^>]*href="(\/[^"#]*)"/g)) links.add(match[1].split('?')[0])
   assert.ok(!text.includes('<div id="root"></div>'), `${path}: empty app shell`)
@@ -111,13 +123,24 @@ for (const [toolPath, categoryPath] of toolCategories) {
   assert.ok(htmlByPath.get('/tools')?.includes(`href="${toolPath}"`), `${toolPath}: catalog tool link`)
   assert.ok(htmlByPath.get(categoryPath)?.includes(`href="${toolPath}"`), `${toolPath}: category tool link`)
 }
-const expectedGuideLinks = {
-  '/ocr-pdf': '/guides/make-scanned-pdf-searchable',
-  '/compress-pdf': '/guides/compress-pdf-without-losing-searchable-text',
-  '/pdf-to-word': '/guides/pdf-to-word-formatting-changes',
+for (const [guidePath, primaryPaths] of guidePrimaryTools) {
+  const guideTitle = htmlByPath.get(guidePath)?.match(/<title>([^<]+)<\/title>/)?.[1]
+  for (const toolPath of primaryPaths) {
+    const toolHtml = htmlByPath.get(toolPath)
+    assert.ok(toolHtml?.includes(`href="${guidePath}"`), `${toolPath}: contextual guide link ${guidePath}`)
+    assert.notEqual(toolHtml?.match(/<title>([^<]+)<\/title>/)?.[1], guideTitle, `${guidePath}: tool and guide titles must differ`)
+  }
 }
-for (const [toolPath, guidePath] of Object.entries(expectedGuideLinks)) assert.ok(htmlByPath.get(toolPath)?.includes(`href="${guidePath}"`), `${toolPath}: contextual guide link`)
-for (const [categoryPath, guidePath] of Object.entries({ '/pdf-analysis-tools': expectedGuideLinks['/ocr-pdf'], '/optimize-pdf': expectedGuideLinks['/compress-pdf'], '/pdf-converters': expectedGuideLinks['/pdf-to-word'] })) assert.ok(htmlByPath.get(categoryPath)?.includes(`href="${guidePath}"`), `${categoryPath}: guide link`)
+const categoryGuideLinks = {
+  '/pdf-analysis-tools': ['/guides/make-scanned-pdf-searchable'],
+  '/optimize-pdf': ['/guides/compress-pdf-without-losing-searchable-text'],
+  '/pdf-converters': ['/guides/pdf-to-word-formatting-changes', '/guides/pdf-to-excel', '/guides/pdf-to-powerpoint'],
+  '/organize-pdf': ['/guides/merge-pdf'],
+  '/pdf-security-tools': ['/guides/pdf-password-security'],
+}
+for (const [categoryPath, linkedGuides] of Object.entries(categoryGuideLinks)) {
+  for (const guidePath of linkedGuides) assert.ok(htmlByPath.get(categoryPath)?.includes(`href="${guidePath}"`), `${categoryPath}: guide link ${guidePath}`)
+}
 const robots = await read('/robots.txt')
 assert.equal(robots.status, 200)
 assert.match(robots.text, /Sitemap: https:\/\/pdfhope.com\/sitemap.xml/)

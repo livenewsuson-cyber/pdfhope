@@ -1,7 +1,7 @@
 import { ArrowRight, BookOpen, Clock3 } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { SeoBreadcrumbs } from '../components/SeoBreadcrumbs'
-import { guideBySlug, guideReadingMinutes, guideWordCount, guides, type Guide, type GuideSection } from '../data/guides'
+import { guideByPath, guideBySlug, guideReadingMinutes, guideWordCount, type Guide, type GuideSection } from '../data/guides'
 import { useSeo } from '../hooks/useSeo'
 import { NotFound } from './InfoPage'
 
@@ -29,10 +29,16 @@ export function GuidePage() {
 function GuideArticle({ guide }: { guide: Guide }) {
   const path = `/guides/${guide.slug}`
   useSeo(guide.seoTitle, guide.description, path, true, true)
-  const otherGuides = guides.filter((item) => item.slug !== guide.slug)
+  const existingConnections: Record<string, string[]> = {
+    'make-scanned-pdf-searchable': ['/guides/pdf-to-excel'],
+    'compress-pdf-without-losing-searchable-text': ['/guides/merge-pdf'],
+    'pdf-to-word-formatting-changes': ['/guides/pdf-to-powerpoint'],
+  }
+  const connectedGuides = (guide.relatedGuides ?? existingConnections[guide.slug] ?? []).map((relatedPath) => guideByPath[relatedPath]).filter(Boolean)
+  const primaryTools = [guide.primaryTool, ...(guide.additionalPrimaryTools ?? [])]
   return <main className="guide-page">
     <SeoBreadcrumbs path={path} />
-    <article className="guide-article">
+    <article className="guide-article" data-primary-paths={primaryTools.map((item) => item.path).join(',')}>
       <header className="guide-hero">
         <span className="kicker">{guide.topic} guide</span>
         <h1>{guide.title}</h1>
@@ -43,13 +49,13 @@ function GuideArticle({ guide }: { guide: Guide }) {
         <strong>Short answer</strong>
         <p>{guide.shortAnswer}</p>
       </aside>
+      <section className="guide-primary-cta guide-primary-cta--top" aria-labelledby="guide-primary-cta-title">
+        <span className="guide-card-icon" aria-hidden="true"><BookOpen size={22} /></span>
+        <div><h2 id="guide-primary-cta-title">Ready to work on your PDF?</h2><p>{guide.primaryTool.description}</p></div>
+        <div className="guide-primary-actions">{primaryTools.map((item) => <Link className="primary-button" data-primary-tool="true" to={item.path} key={item.path}>{item.label} <ArrowRight size={17} aria-hidden="true" /></Link>)}</div>
+      </section>
       <div className="guide-body">
         {guide.sections.map((section) => <Section section={section} key={section.heading} />)}
-        <section className="guide-primary-cta" aria-labelledby="guide-primary-cta-title">
-          <span className="guide-card-icon" aria-hidden="true"><BookOpen size={22} /></span>
-          <div><h2 id="guide-primary-cta-title">Ready to work on your PDF?</h2><p>{guide.primaryTool.description}</p></div>
-          <Link className="primary-button" to={guide.primaryTool.path}>{guide.primaryTool.label} <ArrowRight size={17} aria-hidden="true" /></Link>
-        </section>
         <section className="faq guide-faq">
           <span className="kicker">Common questions</span>
           <h2>Frequently asked questions</h2>
@@ -60,11 +66,11 @@ function GuideArticle({ guide }: { guide: Guide }) {
           <h2>Related PDF tools</h2>
           <div>{guide.relatedTools.map((item) => <Link to={item.path} key={item.path}><strong>{item.label}</strong><span>{item.description}</span><ArrowRight size={16} aria-hidden="true" /></Link>)}</div>
         </section>
-        <section className="guide-more">
-          <h2>More PDF guides</h2>
-          <div>{otherGuides.map((item) => <Link to={`/guides/${item.slug}`} key={item.slug}><span>{item.topic}</span><strong>{item.title}</strong></Link>)}</div>
+        {connectedGuides.length > 0 && <section className="guide-more">
+          <h2>Related guides</h2>
+          <div>{connectedGuides.map((item) => <Link to={`/guides/${item.slug}`} key={item.slug}><span>{item.topic}</span><strong>{item.title}</strong></Link>)}</div>
           <Link className="guide-all-link" to="/guides">View all PDF guides <ArrowRight size={16} aria-hidden="true" /></Link>
-        </section>
+        </section>}
       </div>
     </article>
   </main>

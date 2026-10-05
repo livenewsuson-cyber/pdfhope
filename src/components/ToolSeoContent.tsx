@@ -9,6 +9,11 @@ const toolGuideSlugs: Record<string, string> = {
   'ocr-pdf': 'make-scanned-pdf-searchable',
   'compress-pdf': 'compress-pdf-without-losing-searchable-text',
   'pdf-to-word': 'pdf-to-word-formatting-changes',
+  'pdf-to-excel': 'pdf-to-excel',
+  'pdf-to-powerpoint': 'pdf-to-powerpoint',
+  'merge-pdf': 'merge-pdf',
+  'protect-pdf': 'pdf-password-security',
+  'unlock-pdf': 'pdf-password-security',
 }
 
 export function ToolSeoContent({ slug }: { slug: string }) {
