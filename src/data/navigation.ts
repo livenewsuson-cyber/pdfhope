@@ -22,7 +22,7 @@ export const navigationGroups: NavigationGroup[] = [
     href: categoryHubById.convert.path,
     label: 'Convert',
     description: 'PDF, Office and image conversion.',
-    tools: toolList(['word-to-pdf', 'pdf-to-word', 'excel-to-pdf', 'pdf-to-excel', 'powerpoint-to-pdf', 'pdf-to-powerpoint', 'jpg-to-pdf', 'png-to-pdf', 'webp-to-pdf', 'images-to-pdf', 'pdf-to-jpg', 'pdf-to-png']),
+    tools: toolList(['word-to-pdf', 'pdf-to-word', 'excel-to-pdf', 'pdf-to-excel', 'powerpoint-to-pdf', 'pdf-to-powerpoint', 'jpg-to-pdf', 'png-to-pdf', 'webp-to-pdf', 'images-to-pdf', 'pdf-to-jpg', 'pdf-to-png', 'pdf-to-txt']),
   },
   {
     id: 'organize',

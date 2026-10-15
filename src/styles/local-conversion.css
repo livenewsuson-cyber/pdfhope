@@ -1,0 +1,7 @@
+.local-conversion .configure-title h2 { overflow-wrap: anywhere; }
+.local-conversion .configure-panel { min-width: 0; }
+.local-result { display: grid; gap: 16px; padding-block: 20px; }
+.local-result .primary-button { justify-self: start; }
+.local-options { display: flex; flex-wrap: wrap; gap: 16px; margin-block: 20px; }
+.local-options > label { flex: 1 1 180px; }
+.local-conversion .process-bar { gap: 16px; flex-wrap: wrap; }

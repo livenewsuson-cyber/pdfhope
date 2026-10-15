@@ -1,6 +1,7 @@
 export type ToolCategory = 'Organize' | 'Convert' | 'Optimize' | 'Secure' | 'Edit' | 'Inspect' | 'Advanced'
 
 export type ToolKind =
+  | 'local-conversion'
   | 'merge' | 'split' | 'extract' | 'delete' | 'reorder' | 'rotate'
   | 'images-to-pdf' | 'pdf-to-image' | 'page-numbers' | 'watermark'
   | 'metadata' | 'health' | 'ocr' | 'blank' | 'page-size' | 'orientation'

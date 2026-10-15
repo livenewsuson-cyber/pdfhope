@@ -1,5 +1,6 @@
 import { createElement, lazy, type ComponentType, type ComponentProps } from 'react'
 import { categoryHubByPath } from '../data/categoryHubs'
+import { getTool } from '../data/tools'
 
 function deferredPage<T extends ComponentType<any>>(load: () => Promise<{ default: T }>) {
   const Lazy = lazy(load)
@@ -11,6 +12,7 @@ function deferredPage<T extends ComponentType<any>>(load: () => Promise<{ defaul
 }
 
 export const routePages = {
+  LocalConversionPage: deferredPage(() => import('../pages/LocalConversionPage').then(module => ({ default: module.LocalConversionPage }))),
   HomePage: deferredPage(() => import('../pages/HomePage').then(module => ({ default: module.HomePage }))),
   ToolsPage: deferredPage(() => import('../pages/ToolsPage').then(module => ({ default: module.ToolsPage }))),
   GuidesPage: deferredPage(() => import('../pages/GuidesPage').then(module => ({ default: module.GuidesPage }))),
@@ -29,6 +31,7 @@ export const routePages = {
 }
 
 export function preloadInitialPage(path: string) {
+  if (getTool(path.slice(1))?.kind === 'local-conversion') return routePages.LocalConversionPage.preload()
   const page = path === '/' ? 'HomePage' : path === '/tools' ? 'ToolsPage' : path === '/guides' ? 'GuidesPage' : path.startsWith('/guides/') ? 'GuidePage' : categoryHubByPath[path] ? 'CategoryPage' : path === '/pdf-reader' ? 'PdfReader' : path === '/ocr-pdf' ? 'OcrPdfPage' : path === '/edit-pdf' ? 'PdfEditor' : path === '/header-footer-pdf' ? 'HeaderFooterPage' : ['/protect-pdf', '/unlock-pdf'].includes(path) ? 'SecurityToolPage' : path === '/sign-pdf' ? 'SignPdfPage' : ['/word-to-pdf', '/pdf-to-word', '/excel-to-pdf', '/pdf-to-excel', '/powerpoint-to-pdf', '/pdf-to-powerpoint'].includes(path) ? 'DocumentConversionPage' : ['/about', '/contact', '/privacy', '/privacy-policy', '/terms', '/cookie-policy', '/security', '/accessibility'].includes(path) ? 'InfoPage' : path === '/404' ? 'NotFound' : 'ToolPage'
   return routePages[page].preload()
 }
