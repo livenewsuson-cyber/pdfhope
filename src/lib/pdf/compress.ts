@@ -153,7 +153,20 @@ export async function detectLikelyScanHeavy(file: File) {
   finally { await pdf.cleanup() }
 }
 
-export async function compressPdf(file: File, { preset, targetBytes, allowFlattening = false, onProgress,qualityPreference='balanced',signal }: { preset: CompressionPreset; targetBytes?: number; allowFlattening?: boolean; onProgress?: (progress: CompressionProgress) => void;qualityPreference?:QualityPreference;signal?:AbortSignal }): Promise<CompressionResult> {
+type CompressionOptions = { preset:CompressionPreset;targetBytes?:number;allowFlattening?:boolean;onProgress?:(progress:CompressionProgress)=>void;qualityPreference?:QualityPreference;signal?:AbortSignal }
+export async function compressPdf(file:File,options:CompressionOptions):Promise<CompressionResult>{
+  const {signal}=options;signal?.throwIfAborted()
+  if(!signal)return compressPdfWork(file,options)
+  // Some PDF.js operations do not settle after their transport is destroyed.
+  // Reject the caller independently, while the abort handlers stop the engines.
+  return new Promise((resolve,reject)=>{
+    const abort=()=>reject(new DOMException('Compression cancelled.','AbortError'))
+    signal.addEventListener('abort',abort,{once:true})
+    void compressPdfWork(file,{...options,onProgress:p=>{if(!signal.aborted)options.onProgress?.(p)}}).then(value=>{signal.removeEventListener('abort',abort);resolve(value)},error=>{signal.removeEventListener('abort',abort);reject(error)})
+  })
+}
+
+async function compressPdfWork(file: File, { preset, targetBytes, allowFlattening = false, onProgress,qualityPreference='balanced',signal }: CompressionOptions): Promise<CompressionResult> {
   signal?.throwIfAborted()
   if(file.size>30*1024*1024)throw new Error('Compression accepts PDFs up to 30 MB.')
   if (preset === 'target') {
