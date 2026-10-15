@@ -20,7 +20,10 @@ export async function documentPdf(model:DocumentModel,options:{paper:'a4'|'lette
   const ensure=(height:number)=>{if(y-height<bottom)nextPage()}
   const drawLine=(tokens:{text:string;font:PDFFont;size:number;color?:ReturnType<typeof rgb>}[],x:number,lineHeight:number,background=false)=>{
     ensure(lineHeight);if(background)page.drawRectangle({x:margin-3,y:y-lineHeight+2,width:width+6,height:lineHeight,color:rgb(.95,.96,.98)})
-    for(const token of tokens){if(token.text.trim())visible++;page.drawText(token.text,{x,y:y-token.size,font:token.font,size:token.size,color:token.color||rgb(.08,.12,.18)});x+=token.font.widthOfTextAtSize(token.text,token.size)}y-=lineHeight
+    // Keep compatible words in one PDF text object for reliable text copying.
+    const merged:typeof tokens=[]
+    for(const token of tokens){const previous=merged.at(-1);if(previous&&previous.font===token.font&&previous.size===token.size&&JSON.stringify(previous.color)===JSON.stringify(token.color))previous.text+=token.text;else merged.push({...token})}
+    for(const token of merged){if(token.text.trim())visible++;page.drawText(token.text,{x,y:y-token.size,font:token.font,size:token.size,color:token.color||rgb(.08,.12,.18)});x+=token.font.widthOfTextAtSize(token.text,token.size)}y-=lineHeight
   }
   const wrapped=(runs:Run[],size:number)=>{
     const lines:{text:string;font:PDFFont;size:number;color?:ReturnType<typeof rgb>}[][]=[[]];let used=0

@@ -36,6 +36,7 @@ describe('real local document conversion',()=>{
     const result=await output(notebookModel(json),'notebook')
     expect(result.text.indexOf('Notebook title')).toBeLessThan(result.text.indexOf('never executed'));expect(result.text).toContain('Saved output 42');expect(result.text).toContain('Important')
     expect(()=>notebookModel('{bad')).toThrow('Invalid notebook');expect(()=>notebookModel('{"nbformat":3}')).toThrow('version 4')
+    expect(()=>notebookModel('null')).toThrow('version 4');expect(()=>notebookModel('{"nbformat":4,"cells":[null]}')).toThrow('cell 1')
   })
   it('parses actual multipart MIME headers, encoded subject and attachment filenames',async()=>{
     const eml=['From: Sender <sender@example.test>','To: Reader <reader@example.test>','Subject: =?UTF-8?B?Q2Fmw6kgdXBkYXRl?=','Date: Thu, 15 Oct 2026 10:00:00 +0000','MIME-Version: 1.0','Content-Type: multipart/mixed; boundary="mix"','','--mix','Content-Type: text/html; charset=utf-8','','<p>Message body</p><img src="https://track.example/test">','--mix','Content-Type: text/plain','Content-Disposition: attachment; filename="notes.txt"','','not executed','--mix--'].join('\r\n')
@@ -54,5 +55,22 @@ describe('real local document conversion',()=>{
   it('rejects unsupported font glyphs and empty models instead of blank successful PDFs',async()=>{
     await expect(output({blocks:[],warnings:[]},'empty')).rejects.toThrow('No supported')
     await expect(output({blocks:[{kind:'text',runs:[{text:'漢字'}]}],warnings:[]},'unsupported')).rejects.toThrow('font cannot render')
+  })
+  it('preserves supported saved notebook images and MIME CID images',async()=>{
+    const png='iVBORw0KGgoAAAANSUhEUgAAAAIAAAABCAYAAAD0In+KAAAAEUlEQVR4nGOQlJT8/+HDh/8AEIAFGsDROuMAAAAASUVORK5CYII='
+    const book=notebookModel(JSON.stringify({nbformat:4,cells:[{cell_type:'markdown',source:'## Figure'},{cell_type:'code',source:'saved figure',outputs:[{output_type:'display_data',data:{'image/png':png}}]}]}))
+    expect(book.blocks.filter(b=>b.kind==='image')).toHaveLength(1)
+    expect((await output(book,'notebook-image')).pages).toBe(1)
+    const eml=['From: sender@example.test','Subject: Inline figure','MIME-Version: 1.0','Content-Type: multipart/related; boundary="inline"','','--inline','Content-Type: text/html','','<p>Embedded figure</p><img src="cid:figure">','--inline','Content-Type: image/png','Content-ID: <figure>','Content-Transfer-Encoding: base64','',png,'--inline--'].join('\r\n')
+    const email=await emailModel(new TextEncoder().encode(eml),'eml-to-pdf')
+    expect(email.blocks.filter(b=>b.kind==='image')).toHaveLength(1)
+    expect((await output(email,'email-image')).pages).toBe(1)
+  })
+  it('preserves real MSG HTML, recipient and attachment metadata safely',async()=>{
+    const cfb=CFB.utils.cfb_new({root:'Root Entry'})
+    CFB.utils.cfb_add(cfb,'__properties_version1.0',new Uint8Array(32))
+    for(const [path,text]of [['__substg1.0_0037001F','HTML message'],['__substg1.0_1013001F','<p>MSG HTML body</p><script>UNSAFE_CONTENT</script>'],['__recip_version1.0_#00000000/__substg1.0_3001001F','Recipient Name'],['__recip_version1.0_#00000000/__substg1.0_39FE001F','reader@example.test'],['__attach_version1.0_#00000000/__substg1.0_3707001F','report.pdf']])CFB.utils.cfb_add(cfb,path,Buffer.from(text+'\0','utf16le'))
+    const model=await emailModel(new Uint8Array(CFB.write(cfb,{type:'buffer'})),'msg-to-pdf'),result=await output(model,'msg-html')
+    expect(result.text).toContain('MSG HTML body');expect(result.text).toContain('reader@example.test');expect(result.text).toContain('report.pdf');expect(result.text).not.toContain('UNSAFE_CONTENT')
   })
 })

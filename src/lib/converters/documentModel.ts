@@ -65,10 +65,12 @@ export function notebookModel(text:string):DocumentModel {
   checkText(text)
   let value:unknown
   try{value=JSON.parse(text)}catch{throw new Error('Invalid notebook JSON.')}
+  if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('Use a version 4 Jupyter notebook object.')
   const book=value as {nbformat?:number;cells?:{cell_type?:string;source?:unknown;outputs?:{output_type?:string;text?:unknown;data?:Record<string,unknown>;ename?:string;evalue?:string}[]}[]}
   if(book.nbformat!==4||!Array.isArray(book.cells)||!book.cells.length||book.cells.length>500)throw new Error('Use a version 4 Jupyter notebook with 1–500 cells.')
   const model:DocumentModel={blocks:[],warnings:['Notebook code is printed, never run. Widgets, JavaScript, SVG, LaTeX math and remote resources are not rendered. Code uses readable plain formatting.']}
   for(const [i,cell]of book.cells.entries()){
+    if(!cell||typeof cell!=='object'||(cell.source!==undefined&&typeof cell.source!=='string'&&!(Array.isArray(cell.source)&&cell.source.every(s=>typeof s==='string')))|| (cell.outputs!==undefined&&(!Array.isArray(cell.outputs)||cell.outputs.length>200||cell.outputs.some(o=>!o||typeof o!=='object'))))throw new Error(`Invalid or oversized notebook cell ${i+1}.`)
     const source=joinText(cell.source)
     if(cell.cell_type==='markdown'){const parsed=htmlModel(marked.parse(source,{async:false}) as string);model.blocks.push(...parsed.blocks);model.warnings.push(...parsed.warnings)}
     else if(cell.cell_type==='code'){
