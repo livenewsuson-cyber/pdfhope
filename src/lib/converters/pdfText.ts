@@ -14,6 +14,8 @@ export async function extractDocumentText(pdf: PDFDocumentProxy, progress?: (pag
       for (const entry of content.items) {
         if (!('str' in entry)) continue
         const item = entry
+        // Strip nonprinting controls without altering Unicode text.
+        // eslint-disable-next-line no-control-regex
         const value = item.str.replace(/[\u0000-\u0008\u000b\u000e-\u001f]/g, '')
         if (previous && value) {
           const dy = Math.abs(item.transform[5] - previous.transform[5]), size = Math.max(Math.abs(previous.height), 1)

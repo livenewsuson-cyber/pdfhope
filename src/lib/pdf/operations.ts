@@ -76,17 +76,26 @@ async function imageBytes(file: File) {
   if (isPng) return { bytes, type: 'image/png' }
   if (!isWebp && file.type !== 'image/webp') throw new Error('The selected file is not a supported JPG, PNG, or WebP image.')
   const bitmap = await createImageBitmap(file)
+  if(bitmap.width*bitmap.height>12000000){bitmap.close();throw new Error('Use images up to 12 megapixels.')}
   const canvas = document.createElement('canvas')
   canvas.width = bitmap.width; canvas.height = bitmap.height
   canvas.getContext('2d')!.drawImage(bitmap, 0, 0)
+  bitmap.close()
   const converted = await new Promise<Blob>((resolve, reject) => canvas.toBlob((result) => result ? resolve(result) : reject(new Error('Could not convert WebP image.')), 'image/png'))
+  canvas.width=0;canvas.height=0
   return { bytes: new Uint8Array(await converted.arrayBuffer()), type: 'image/png' }
 }
 
-export async function imagesToPdf(files: File[], settings: { pageSize: 'auto' | 'a4' | 'letter'; margin: number; fit: 'fit' | 'fill' }) {
+export async function imagesToPdf(files: File[], settings: { pageSize: 'auto' | 'a4' | 'letter'; margin: number; fit: 'fit' | 'fill' },signal?:AbortSignal) {
   const document = await PDFDocument.create()
+  let totalPages=0
   for (const file of files) {
-    const source = await imageBytes(file)
+    signal?.throwIfAborted()
+    const tiff=/\.tiff?$/i.test(file.name)||file.type==='image/tiff'
+    const sources=tiff?await (await import('../converters/tiffClient')).tiffImages(file,signal):[await imageBytes(file)]
+    for (const source of sources) {
+    signal?.throwIfAborted()
+    if (++totalPages>100) throw new Error('Images to PDF supports at most 100 output pages.')
     const image = source.type === 'image/png' ? await document.embedPng(source.bytes) : await document.embedJpg(source.bytes)
     const fixed = settings.pageSize === 'a4' ? [595.28, 841.89] : settings.pageSize === 'letter' ? [612, 792] : [image.width + settings.margin * 2, image.height + settings.margin * 2]
     const page = document.addPage(fixed as [number, number])
@@ -94,6 +103,7 @@ export async function imagesToPdf(files: File[], settings: { pageSize: 'auto' | 
     const scale = settings.fit === 'fill' ? Math.max(available.width / image.width, available.height / image.height) : Math.min(available.width / image.width, available.height / image.height)
     const width = image.width * scale, height = image.height * scale
     page.drawImage(image, { x: (page.getWidth() - width) / 2, y: (page.getHeight() - height) / 2, width, height })
+    }
   }
   return blob(await document.save())
 }

@@ -36,7 +36,8 @@ export const parsePageSelection = (value: string, pageCount: number) => {
 export const validateFiles = (files: File[], acceptsPdf: boolean, multiple = false) => {
   if (!files.length) throw new Error('Choose at least one file.')
   if (!multiple && files.length > 1) throw new Error('This tool accepts one file at a time.')
-  const valid = files.every((file) => acceptsPdf ? file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf') : /^image\/(jpeg|png|webp)$/.test(file.type))
-  if (!valid) throw new Error(acceptsPdf ? 'Only PDF files are supported here.' : 'Only JPG, PNG, and WebP images are supported here.')
+  const valid = files.every((file) => acceptsPdf ? file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf') : /^image\/(jpeg|png|webp|tiff)$/.test(file.type) || /\.(jpg|jpeg|jfif|png|webp|tiff|tif)$/i.test(file.name))
+  if (!valid) throw new Error(acceptsPdf ? 'Only PDF files are supported here.' : 'Choose JPG, JFIF, PNG, WebP or supported TIFF images.')
+  if (!acceptsPdf && (files.length>50 || files.some(f=>f.size>20*1024*1024) || files.reduce((n,f)=>n+f.size,0)>50*1024*1024)) throw new Error('Use up to 50 image files, 20 MB each and 50 MB total.')
   if (files.some((file) => file.size === 0)) throw new Error('One of the selected files is empty.')
 }
