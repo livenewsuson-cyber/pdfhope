@@ -2,6 +2,8 @@ import { BookOpen, FilePenLine, Combine, Scissors, FileOutput, FileMinus2, ListO
 
 type Accent = 'blue' | 'red' | 'purple' | 'teal' | 'orange' | 'pink' | 'green'
 export const icons: Record<string, [LucideIcon, Accent]> = {
+  'pdf-to-txt':[FileType2,'blue'], 'csv-to-pdf':[Table2,'green'],
+  'ipynb-to-pdf':[BookOpen,'orange'], 'eml-to-pdf':[FileInput,'purple'], 'msg-to-pdf':[FileInput,'blue'],
   'ocr-pdf': [ScanSearch, 'blue'],
   'pdf-reader': [BookOpen, 'blue'], 'edit-pdf': [FilePenLine, 'blue'],
   'merge-pdf': [Combine, 'red'], 'split-pdf': [Scissors, 'purple'],

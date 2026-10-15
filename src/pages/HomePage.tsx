@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { getTool, tools } from '../data/tools'
 import { intelligenceTools } from '../data/navigation'
 import { HomeToolDiscovery } from '../components/HomeToolDiscovery'
+import { ToolCard } from '../components/ToolCard'
 import { ToolIcon } from '../components/ToolIcon'
 import { useSeo } from '../hooks/useSeo'
 import { categoryHubs } from '../data/categoryHubs'
@@ -36,6 +37,8 @@ export function HomePage() {
     </section>
 
     <HomeToolDiscovery />
+
+    <section className="tools-section" aria-labelledby="home-document-converters"><div className="section-heading"><div><span className="kicker">Convert on your device</span><h2 id="home-document-converters">Developer, data and email to PDF</h2><p>Printable documents from saved notebooks, CSV data and email files.</p></div></div><div className="tool-grid">{['ipynb-to-pdf','csv-to-pdf','eml-to-pdf','msg-to-pdf'].map(slug=><ToolCard key={slug} tool={getTool(slug)!}/>)}</div><p><Link to="/pdf-to-txt">Extract PDF text</Link> · <Link to="/images-to-pdf">Convert TIFF and JFIF images</Link></p></section>
 
     <section className="home-category-links"><div className="section-heading"><div><span className="kicker">Explore by task</span><h2>Explore PDF tools by task</h2></div><Link to="/tools">All PDF tools <ArrowRight size={16} aria-hidden="true" /></Link></div><div>{categoryHubs.map((hub) => <Link key={hub.path} to={hub.path}>{hub.label}<ArrowRight size={15} aria-hidden="true" /></Link>)}</div></section>
 

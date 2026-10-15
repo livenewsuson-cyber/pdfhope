@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
-import { useLayoutEffect, useRef, useState } from 'react'
+import { Fragment, useLayoutEffect, useRef, useState } from 'react'
 import { navigationGroups, type NavigationGroup } from '../data/navigation'
 import { megaMenuShort } from '../data/navigationCopy'
 import { calculateMegaMenuCenter } from '../lib/megaMenuPosition'
@@ -45,10 +45,10 @@ export function MegaMenu({ mode, anchorElement, onNavigate }: { mode: MegaMenuMo
           <p>{group.description}</p>
         </div>
         <div className="mega-menu-links">
-          {group.tools.map((tool) => <Link to={`/${tool.slug}`} key={tool.slug} onClick={onNavigate}>
+          {group.tools.map((tool) => <Fragment key={tool.slug}>{group.id==='convert'&&tool.slug==='pdf-to-jpg'&&<h3 style={{gridColumn:'1 / -1'}}>Convert from PDF</h3>}<Link to={`/${tool.slug}`} onClick={onNavigate}>
             <ToolIcon slug={tool.slug} compact />
             <span><strong>{tool.name}</strong><small>{megaMenuShort[tool.slug] ?? tool.short}</small></span>
-          </Link>)}
+          </Link></Fragment>)}
         </div>
       </section>)}
     </div>

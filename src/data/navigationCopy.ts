@@ -1,5 +1,10 @@
 // Presentation-only copy for the desktop mega menu. ToolDefinition.short remains unchanged.
 export const megaMenuShort: Record<string, string> = {
+  'pdf-to-txt':'Extract selectable text',
+  'csv-to-pdf':'Print CSV tables',
+  'eml-to-pdf':'Save a MIME email',
+  'msg-to-pdf':'Save an Outlook message',
+  'ipynb-to-pdf':'Print saved notebook cells',
   'ocr-pdf': 'Make scans searchable',
   'word-to-pdf': 'Convert Word to PDF',
   'pdf-to-word': 'Create editable Word files',

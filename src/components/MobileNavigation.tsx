@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronDown } from 'lucide-react'
 import { navigationGroups } from '../data/navigation'
@@ -17,7 +17,7 @@ export function MobileNavigation({ onNavigate }: { onNavigate: () => void }) {
           </button>
           <div id={`mobile-${group.id}`} className="mobile-nav-links" hidden={!expanded}>
             <Link className="mobile-category-link" to={group.href} onClick={onNavigate}>Explore {group.label} tools</Link>
-            {group.tools.map((tool) => <Link to={`/${tool.slug}`} key={tool.slug} onClick={onNavigate}><ToolIcon slug={tool.slug} compact /><span>{tool.name}</span></Link>)}
+            {group.tools.map((tool) => <Fragment key={tool.slug}>{group.id==='convert'&&tool.slug==='pdf-to-jpg'&&<h3>Convert from PDF</h3>}<Link to={`/${tool.slug}`} onClick={onNavigate}><ToolIcon slug={tool.slug} compact /><span>{tool.name}</span></Link></Fragment>)}
           </div>
         </section>
       })}

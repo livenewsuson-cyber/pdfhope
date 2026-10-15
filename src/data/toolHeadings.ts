@@ -12,6 +12,11 @@ const h1Overrides: Record<string, string> = {
 }
 
 const howToHeadings: Record<string, string> = {
+  'pdf-to-txt':'How to Extract PDF Text as UTF-8',
+  'csv-to-pdf':'How to Convert a CSV Table to PDF',
+  'eml-to-pdf':'How to Convert an EML Email to PDF',
+  'msg-to-pdf':'How to Convert an Outlook MSG to PDF',
+  'ipynb-to-pdf':'How to Export a Saved Notebook to PDF',
   'ocr-pdf': 'How to Make a Scanned PDF Searchable',
   'pdf-reader': 'How to Read and Search a PDF',
   'edit-pdf': 'How to Edit a PDF',
