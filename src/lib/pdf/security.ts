@@ -1,4 +1,5 @@
 import { openRenderedPdf } from './render'
+import { PermissionFlag } from 'pdfjs-dist'
 
 const inputName = 'input.pdf'
 const outputName = 'output.pdf'
@@ -35,7 +36,7 @@ async function withRunner<T>(work: (runner: Awaited<ReturnType<typeof import('..
     workerUrl: new URL('../../vendor/qpdf-run/src/worker.js', import.meta.url),
     qpdfJsUrl: new URL('../../vendor/qpdf-run/vendor/qpdf/lib/qpdf.js', import.meta.url),
     wasmUrl: new URL('../../vendor/qpdf-run/vendor/qpdf/lib/qpdf.wasm', import.meta.url),
-    timeoutMs: 10 * 60 * 1000,
+    timeoutMs: 90000,
   })
   try { return await work(runner) } finally { await runner.destroy() }
 }
@@ -52,6 +53,44 @@ export async function isPasswordProtected(file: File): Promise<boolean> {
     if (/password/i.test(String(error))) return true
     throw error
   }
+}
+
+export type PdfSecurityStatus = { needsPassword:boolean; restricted:boolean; permissions:string[]; pages:number; signed:boolean }
+export async function inspectSecurity(file:File):Promise<PdfSecurityStatus> {
+  if(!file.size||file.size>30*1024*1024)throw new Error('Choose a nonempty PDF no larger than 30 MB.')
+  let pdf:Awaited<ReturnType<typeof openRenderedPdf>>
+  try{pdf=await openRenderedPdf(file)}catch(error){if(/password/i.test(String(error)))return {needsPassword:true,restricted:false,permissions:[],pages:0,signed:false};throw error}
+  try{
+    if(pdf.numPages>200)throw new Error('Use at most 200 pages for permission changes.')
+    const flags=await pdf.getPermissions(),checks:[number,string][]=[[PermissionFlag.PRINT,'Print'],[PermissionFlag.COPY,'Copy text/images'],[PermissionFlag.MODIFY_CONTENTS,'Edit content'],[PermissionFlag.MODIFY_ANNOTATIONS,'Edit annotations'],[PermissionFlag.ASSEMBLE,'Rearrange pages']]
+    const permissions=flags===null?[]:checks.filter(([flag])=>!new Set(flags).has(flag)).map(([,label])=>label)
+    const fields=await pdf.getFieldObjects()
+    const values=fields instanceof Map?[...fields.values()]:Object.values(fields||{})
+    const signed=values.flat().some((v:unknown)=>v&&typeof v==='object'&&(v as {type?:string}).type==='Sig')
+    return {needsPassword:false,restricted:permissions.length>0,permissions,pages:pdf.numPages,signed}
+  }finally{await pdf.cleanup()}
+}
+
+export async function removeOwnerRestrictions(file:File,authorized:boolean):Promise<{output:Blob;pages:number}> {
+  if(!authorized)throw new Error('Confirm you own this PDF or are authorized to modify its permissions.')
+  const source=await inspectSecurity(file)
+  if(source.needsPassword)throw new Error('This PDF requires its opening password. Use the known-password unlock flow.')
+  if(!source.restricted)throw new Error('No supported print, copy or edit restrictions were found.')
+  return withRunner(async runner=>{
+    const bytes=await runner.runOne({input:new Uint8Array(await file.arrayBuffer()),inputName,outputName,args:['--password=','--decrypt',inputName,outputName]})
+    const output=pdfFile(bytes),verified=await inspectSecurity(output)
+    if(verified.needsPassword||verified.restricted||verified.pages!==source.pages)throw new Error('Permission removal verification failed.')
+    const before=await openRenderedPdf(file),after=await openRenderedPdf(output)
+    try{
+      for(let n=1;n<=source.pages;n++){
+        const a=await before.getPage(n),b=await after.getPage(n),av=a.getViewport({scale:1}),bv=b.getViewport({scale:1})
+        const text=async(p:typeof a)=>(await p.getTextContent()).items.filter(i=>'str'in i).map(i=>i.str).join('')
+        if(av.width!==bv.width||av.height!==bv.height||await text(a)!==await text(b))throw new Error('Document content or page order verification failed.')
+        a.cleanup();b.cleanup()
+      }
+    }finally{await before.cleanup();await after.cleanup()}
+    return {output:new Blob([bytes as BlobPart],{type:'application/pdf'}),pages:source.pages}
+  })
 }
 
 export async function protectPdf(file: File, password: string): Promise<{ output: Blob; pages: number }> {
