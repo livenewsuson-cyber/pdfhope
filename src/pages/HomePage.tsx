@@ -8,6 +8,7 @@ import { ToolIcon } from '../components/ToolIcon'
 import { useSeo } from '../hooks/useSeo'
 import { categoryHubs } from '../data/categoryHubs'
 import { guideReadingMinutes, guides } from '../data/guides'
+import '../styles/homepage-compact.css'
 
 export function HomePage() {
   useSeo('Every PDF tool you need', 'Fast PDF tools to convert, organize, edit and inspect documents, with local processing where supported and secure server conversion when needed.', '/')
@@ -19,16 +20,19 @@ export function HomePage() {
   }, [])
   const filtered = tools.filter((tool) => `${tool.name} ${tool.short} ${tool.category}`.toLowerCase().includes(query.toLowerCase())).slice(0, 6)
 
-  return <main>
+  return <main className="home-page">
     <section className="hero">
-      <div className="eyebrow"><Sparkles size={15} /> Fast. Private. Built for PDFs.</div>
+      <div className="eyebrow"><Sparkles size={15} /> FAST. PRIVATE. BUILT FOR PDFS.</div>
       <h1>Every <span className="hero-emphasis">PDF tool</span> you need.</h1>
-      <p>Convert, organize, edit and understand documents with fast tools and privacy-conscious processing.</p>
+      <p className="hero-description">Convert, organize, edit and understand documents with fast tools and privacy-conscious processing.</p>
+      <div className="hero-paper-art" aria-hidden="true"><div className="hero-paper-back" /><div className="hero-paper-front"><b>PDF</b><i /><i /><i /><i /></div></div>
       <div className="hero-search-wrap">
         <label className="search-box"><Search aria-hidden="true" /><input id="home-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && filtered[0]) navigate(`/${filtered[0].slug}`) }} placeholder="Search PDF tools" aria-label="Search PDF tools" /><kbd>Ctrl K</kbd></label>
+        <p className="hero-search-help">Try: merge pdf, compress, pdf to word, edit text, sign pdf...</p>
         {query && <div className="hero-results">{filtered.map((tool) => <Link to={`/${tool.slug}`} key={tool.slug}><strong>{tool.name}</strong><span>{tool.category} · {tool.short}</span><ArrowRight size={16} /></Link>)}</div>}
       </div>
       <div className="trust-row"><span><ShieldCheck size={16} /> No signup for core tools</span><span><LockKeyhole size={16} /> Local processing where supported</span><span><Smartphone size={16} /> Works on mobile</span></div>
+      <aside className="hero-agent-card" aria-label="AI Agent coming soon"><Sparkles size={24} aria-hidden="true" /><strong>AI Agent</strong><span>Get Help PDF Using AI</span><small className="hero-agent-status">Coming Soon</small></aside>
     </section>
 
     <HomeToolDiscovery />
