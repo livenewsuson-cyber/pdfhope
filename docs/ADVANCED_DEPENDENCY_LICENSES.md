@@ -4,7 +4,7 @@ Reviewed 2026-10-16. Versions are pinned by pnpm-lock.yaml; no runtime CDN scrip
 
 | Dependency | Selected version | License | Purpose |
 | --- | --- | --- | --- |
-| postal-mime | 4.0.6 | MIT | Standard MIME email parsing with nesting/part/header limits |
+| postal-mime | 4.0.6 | MIT-0 | Standard MIME email parsing with nesting/part/header limits |
 | @kenjiuno/msgreader | 1.29.0 | Apache-2.0 | Outlook MSG compound-file parsing |
 | papaparse | 5.7.0 | MIT | CSV quoting and delimiter detection |
 | htmlparser2 | 12.0.0 | MIT | Inert HTML token parsing; never inserts HTML into the browser DOM |

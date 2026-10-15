@@ -1,0 +1,26 @@
+# Preparation only. No public port, host or production gateway is configured.
+# Requires the review and host approval in docs/LIBREOFFICE_DEPLOYMENT_DESIGN.md.
+services:
+  converter:
+    image: ${GOTENBERG_IMAGE:?Set a reviewed Gotenberg 8.34+ image pinned by digest}
+    restart: "no"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 128
+    cpus: 2
+    mem_limit: 2g
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=268435456
+      - /home/gotenberg:rw,nosuid,size=67108864,uid=1001,gid=1001
+    networks: [conversion]
+    environment:
+      CHROMIUM_DISABLE_ROUTES: "true"
+      API_TIMEOUT: "120s"
+      LIBREOFFICE_MAX_QUEUE_SIZE: "2"
+      LIBREOFFICE_RESTART_AFTER: "5"
+    # A separate authenticated gateway and job supervisor are mandatory before
+    # production use. No ports are published by this template.
+networks:
+  conversion:
+    internal: true
