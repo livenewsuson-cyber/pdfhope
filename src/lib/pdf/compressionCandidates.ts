@@ -1,5 +1,5 @@
 export type TextPreservation = 'preserved' | 'partially-preserved' | 'flattened'
-export type CompressionMethod = 'structural' | 'high-quality images' | 'scanned-page recompression' | 'page rasterization'
+export type CompressionMethod = 'structural' | 'metadata cleanup' | 'high-quality images' | 'scanned-page recompression' | 'page rasterization'
 export type CompressionCandidate = {
   bytes: Uint8Array
   methods: CompressionMethod[]

@@ -11,10 +11,17 @@ async function pdfjs() {
   return module
 }
 
-export async function openRenderedPdf(file: File): Promise<PDFDocumentProxy> {
+export async function openRenderedPdf(file: File, signal?:AbortSignal): Promise<PDFDocumentProxy> {
+  signal?.throwIfAborted()
   const module = await pdfjs()
-  return module.getDocument({ data: new Uint8Array(await file.arrayBuffer()), useWorkerFetch: false }).promise
+  const task=module.getDocument({ data: new Uint8Array(await file.arrayBuffer()), useWorkerFetch: false })
+  const abort=()=>{void task.destroy().catch(()=>{})}
+  signal?.addEventListener('abort',abort,{once:true})
+  try { const pdf=await task.promise; signal?.throwIfAborted(); if(signal)releases.set(pdf,()=>{signal.removeEventListener('abort',abort);return task.destroy()}); return pdf }
+  catch(error){signal?.removeEventListener('abort',abort);await task.destroy().catch(()=>{});throw error}
 }
+const releases=new WeakMap<PDFDocumentProxy,()=>Promise<void>>()
+export async function closeRenderedPdf(pdf:PDFDocumentProxy){const release=releases.get(pdf);releases.delete(pdf);if(release)await release();else await pdf.cleanup()}
 
 export async function renderPage(document: PDFDocumentProxy, pageNumber: number, scale = .28) {
   const page = await document.getPage(pageNumber), viewport = page.getViewport({ scale })

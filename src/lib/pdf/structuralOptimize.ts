@@ -1,13 +1,16 @@
 // qpdf-run 0.2.1 is vendored because this checkout's node_modules junction points
 // outside the workspace. The browser worker and 1.8 MB WASM are loaded on demand.
-export async function structuralOptimize(file: File): Promise<Uint8Array> {
+export async function structuralOptimize(file: File,signal?:AbortSignal): Promise<Uint8Array> {
+  signal?.throwIfAborted()
   const { createQpdfRunner } = await import('../../vendor/qpdf-run/src/index.js')
   const runner = await createQpdfRunner({
     workerUrl: new URL('../../vendor/qpdf-run/src/worker.js', import.meta.url),
     qpdfJsUrl: new URL('../../vendor/qpdf-run/vendor/qpdf/lib/qpdf.js', import.meta.url),
     wasmUrl: new URL('../../vendor/qpdf-run/vendor/qpdf/lib/qpdf.wasm', import.meta.url),
-    timeoutMs: 10 * 60 * 1000,
+    timeoutMs: 45000,
   })
+  const abort=()=>{void runner.destroy()}
+  signal?.addEventListener('abort',abort,{once:true})
   try {
     return await runner.runOne({
       input: new Uint8Array(await file.arrayBuffer()),
@@ -23,6 +26,6 @@ export async function structuralOptimize(file: File): Promise<Uint8Array> {
       ],
     })
   } finally {
-    await runner.destroy()
+    signal?.removeEventListener('abort',abort);await runner.destroy()
   }
 }
