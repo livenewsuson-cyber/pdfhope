@@ -22,7 +22,7 @@ export function chooseCompressionCandidate(originalBytes: number, candidates: Co
 export function chooseTargetCompressionCandidate(originalBytes: number, targetBytes: number, candidates: CompressionCandidate[]) {
   const valid = candidates.filter(candidate => candidate.bytes.length < originalBytes)
   const reached = valid.filter(candidate => candidate.bytes.length <= targetBytes)
-  reached.sort((a, b) => (b.qualityScore ?? 0) - (a.qualityScore ?? 0) || b.bytes.length - a.bytes.length)
+  reached.sort((a, b) => (b.qualityScore ?? 0) - (a.qualityScore ?? 0) || a.bytes.length - b.bytes.length)
   const best = reached[0] ?? valid.sort((a, b) => a.bytes.length - b.bytes.length)[0] ?? null
   return { best, targetReached: reached.length > 0 }
 }

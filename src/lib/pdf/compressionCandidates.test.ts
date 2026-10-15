@@ -43,6 +43,10 @@ describe('preservation-first compression candidates', () => {
     expect(choice.best?.bytes.length).toBe(146_000)
     expect(choice.targetReached).toBe(false)
   })
+  it('prefers the smaller output when preservation quality is equal',()=>{
+    const smaller={...candidate(10000,'metadata cleanup'),qualityScore:100},larger={...candidate(20000,'structural'),qualityScore:100}
+    expect(chooseTargetCompressionCandidate(50000,30000,[larger,smaller]).best).toBe(smaller)
+  })
   it('does not present enlarged output as compression', () => {
     expect(chooseTargetCompressionCandidate(125_000, 50_000, [candidate(126_000, 'structural')]).best).toBeNull()
     expect(validateTargetBytes(125_000, 125_000)).toContain('already at or below')

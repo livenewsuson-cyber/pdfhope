@@ -173,6 +173,7 @@ export async function compressPdf(file: File, { preset, targetBytes, allowFlatte
   try {
     if (preset === 'recommended' || preset === 'target') {
       onProgress?.({ stage: 'optimizing', page: 0, total })
+      let optimizationInput=file, metadataCleaned=false
       // Only plain documents take this metadata pass; qpdf handles richer files.
       try {
         if(!(await hasDocumentFeatures(pdf))){
@@ -180,18 +181,18 @@ export async function compressPdf(file: File, { preset, targetBytes, allowFlatte
           const clean=await PDFDocument.load(await file.arrayBuffer(),{updateMetadata:false})
           clean.context.trailerInfo.Info=undefined;clean.catalog.delete(PDFName.of('Metadata'))
           const bytes=await clean.save({useObjectStreams:true})
-          if(await validCandidate(pdf,bytes,true))candidates.push({bytes,methods:['metadata cleanup'],textPreservation:'preserved',rasterizedPages:[],preservedPages:allPages,qualityScore:100})
+          if(await validCandidate(pdf,bytes,true)){candidates.push({bytes,methods:['metadata cleanup'],textPreservation:'preserved',rasterizedPages:[],preservedPages:allPages,qualityScore:100});optimizationInput=new File([bytes as BlobPart],'metadata-cleaned.pdf',{type:'application/pdf'});metadataCleaned=true}
         }
       }catch{signal?.throwIfAborted()}
       try {
         const { structuralOptimize } = await import('./structuralOptimize')
-        const bytes = await structuralOptimize(file,signal)
+        const bytes = await structuralOptimize(optimizationInput,signal)
         signal?.throwIfAborted()
         structuralBytes = bytes.length
         onProgress?.({ stage: 'validating', page: 0, total })
         if (!(await validCandidate(pdf, bytes, true))) throw new Error('The structural output did not pass PDF validation.')
         structuralStatus = 'complete'
-        candidates.push({ bytes, methods: ['structural'], textPreservation: 'preserved', rasterizedPages: [], preservedPages: allPages, qualityScore: 100 })
+        candidates.push({ bytes, methods: metadataCleaned?['metadata cleanup','structural']:['structural'], textPreservation: 'preserved', rasterizedPages: [], preservedPages: allPages, qualityScore: 100 })
       } catch (error) { structuralError = error }
       let scans = new Set<number>(), safeToRebuild = false
       if (preset === 'recommended' || !candidates.some(candidate => candidate.bytes.length <= targetBytes!)) {
