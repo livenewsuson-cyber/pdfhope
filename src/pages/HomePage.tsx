@@ -9,7 +9,6 @@ import { ToolIcon } from '../components/ToolIcon'
 import { useSeo } from '../hooks/useSeo'
 import { categoryHubs } from '../data/categoryHubs'
 import { guideReadingMinutes, guides } from '../data/guides'
-import '../styles/homepage-compact.css'
 
 export function HomePage() {
   useSeo('Every PDF tool you need', 'Fast PDF tools to convert, organize, edit and inspect documents, with local processing where supported and secure server conversion when needed.', '/')
